@@ -10,6 +10,9 @@ use Log::Log4perl qw(:easy);
 use Log::Log4perl::CommandLine qw(:all);
 use MyX::Generic;
 use version; our $VERSION = qv('0.0.1');
+use BioUtils::FastqIO;
+use BioUtils::FastaIO;
+use UtilSY qw(:all);
 
 # set up the logging environment
 my $logger = get_logger();
@@ -17,21 +20,25 @@ my $logger = get_logger();
 {
 	# Usage statement
 	Readonly my $NEW_USAGE => q{ new( {
-		arg1 => ,
-		arg2 => ,
+		plate_primer_file => ,
+		[metadata_file => ,]
 	})};
 
 	# Attributes #
-	my %arg1_of;
-	my %arg2_of;
+	my %plate_primer_file_of;
+	my %metadata_file_of;
+	my %index_to_well_file_of;
+	my %index_to_well_href_of;
 	
 	# Getters #
-	sub get_arg1;
-	sub get_arg2;
+	sub get_plate_primer_file;
+	sub get_metadata_file;
+	sub get_index_to_well_href;
+	sub get_index_to_well_file;
 
 	# Setters #
-	sub set_arg1;
-	sub set_arg2;
+	sub set_plate_primer_file;
+	sub set_index_to_well_href;
 
 	# Others #
 
@@ -49,10 +56,9 @@ my $logger = get_logger();
 
 		# Make sure the required parameters are defined
 		if ( any {!defined $_}
-				$arg_href->{arg1},
-				$arg_href->{arg2},
+				$arg_href->{plate_primer_file},
 			) {
-			MyX::Generic::Undef::Params->throw(
+			MyX::Generic::Undef::Param->throw(
 				error => 'Undefined parameter value',
 				usage => $NEW_USAGE,
 			);
@@ -62,6 +68,16 @@ my $logger = get_logger();
 		my $new_obj = bless \do{my $anon_scalar}, $class;
 
 		# Set Attributes
+		$new_obj->set_plate_primer_file($arg_href->{plate_primer_file});
+		
+		#if ( defined $arg_href->{metadata_file} ) {
+		#	$new_obj->set_metadata_file($arg_href->{metadata_file});
+		#}
+		
+		if ( defined $arg_href->{index_to_well_file} ) {
+			$new_obj->set_index_to_well_file($arg_href->{index_to_well_file});
+			$new_obj->set_index_to_well_href($arg_href->{index_to_well_file});
+		}
 
 		return $new_obj;
 	}
@@ -69,47 +85,222 @@ my $logger = get_logger();
 	###########
 	# Getters #
 	###########
-	sub get_arg1 {
+	sub get_plate_primer_file {
 		my ($self) = @_;
 		
-		return $arg1_of{ident $self};
+		return $plate_primer_file_of{ident $self};
+	}
+	
+	sub get_metadata_file {
+		my ($self) = @_;
+		
+		return $metadata_file_of{ident $self};
+	}
+	
+	sub get_well_from_barcode {
+		my ($self, $well) = @_;
+		
+		is_defined($well);
+		
+		my $barcode;
+		if ( defined $index_to_well_href_of{ident $self}->{$well} ) {
+			$barcode = $index_to_well_href_of{ident $self}->{$well}
+		}
+		else {
+			
+		}
+	}
+	
+	sub get_index_to_well_file {
+		my ($self) = @_;
+		
+		return $index_to_well_file_of{ident $self};
 	}
 
 	###########
 	# Setters #
 	###########
-	sub set_arg1 {
-		my ($self, $arg1) = @_;
+	sub set_plate_primer_file {
+		my ($self, $file) = @_;
 		
 		# check if the parameter is defined
-		if ( ! defined $arg1 ) {
-			MyX::Generic::Undef::Param->throw(
-				error => "Undefined parameter value (arg1)"
-			);
-		}
-        
-        # check if the file exists
-		#if ( ! -f $arg1 ) {
-		#	MyX::Generic::DoesNotExist::File->throw(
-		#		error => "File ($arg1) does not exist"
-		#	)
-		#}
+		is_defined($file, "file");
 		
-		# check that the file is non empty
-		#if ( ! -s $arg1 ) {
-		#	MyX::Generic::File::Empty->throw(
-		#		error => "File ($arg1) is empty"
-		#	);
-		#}
+		# check if the file exists and is non empty
+		check_file($file);
 		
-		$arg1_of{ident $self} = $arg1;
+		$plate_primer_file_of{ident $self} = $file;
 		
 		return 1;
+	}
+	
+	sub set_metadata_file {
+		my ($self, $file) = @_;
+		
+		# check if the parameter is defined
+		is_defined($file, "file");
+		
+		# check if the file exists and is non empty
+		check_file($file);
+		
+		$metadata_file_of{ident $self} = $file;
+		
+		return 1;
+	}
+	
+	sub set_index_to_well_file {
+		my ($self, $file) = @_;
+		
+		# check if the parameter is defined
+		is_defined($file, "file");
+		
+		# check if the file exists and is non empty
+		check_file($file);
+		
+		$index_to_well_file_of{ident $self} = $file;
+		
+		return 1;
+	}
+	
+	sub set_index_to_well_href {
+		my ($self, $file) = @_;
+		
+		my $href;
+		
+		# save the file
+		eval { $self->set_index_to_well_file($file) };
+		if ( my $e = Exception::Class->caught('MyX::Generic::Undef::Param') ) {
+			$href = _get_default_index_href();
+		}
+		else {
+			open my $IN, "<", $file or
+				MyX::Generic::File::CannotOpen->throw(
+					error => "Cannot open file ($file)"
+				);
+			
+			my @vals = ();
+			foreach my $line ( <$IN> ) {
+				chomp($line);
+				next if /^Sample_Well/i;
+				@vals = split("\t", $line);
+				$href->{$vals[1]} = $vals[0];
+			}
+			close($IN);
+		}
+		
+		$index_to_well_href_of{ident $self} = $href;
+		
+		return($href);
 	}
 
 	##########
 	# Others #
 	##########
+	sub _get_default_index_href {
+		my $href = {
+			"A1" => "CGTCGGTA",
+			"B1" => "GTGTCCAA",
+			"C1" => "TCCATGCG",
+			"D1" => "AGGTTCGC",
+			"E1" => "GTCGAAGC",
+			"F1" => "ACGGCTGA",
+			"G1" => "CTATCTGG",
+			"H1" => "TGGACTCT",
+			"A2" => "ATTGTGAG",
+			"B2" => "TGTCGTCA",
+			"C2" => "CGTTCTAA",
+			"D2" => "TGTGAACC",
+			"E2" => "GGCCTATC",
+			"F2" => "GGATATAG",
+			"G2" => "GCTGAAGA",
+			"H2" => "CGGTGTCT",
+			"A3" => "GTCAGCTG",
+			"B3" => "GCCGACTT",
+			"C3" => "CTAAGGAG",
+			"D3" => "TCAGGCCA",
+			"E3" => "TACTTGCA",
+			"F3" => "CTTACTAG",
+			"G3" => "TGATCCTA",
+			"H3" => "ACGTTCAT",
+			"A4" => "TCGCACAA",
+			"B4" => "ACCATCGT",
+			"C4" => "AAGGCACG",
+			"D4" => "GCTAGTTC",
+			"E4" => "CGCTGAAT",
+			"F4" => "CACCGATT",
+			"G4" => "CATGGACG",
+			"H4" => "CATCTTAC",
+			"A5" => "CTGTAACA",
+			"B5" => "GATGATCG",
+			"C5" => "AGCCGTTA",
+			"D5" => "TAAGCATG",
+			"E5" => "TGTGCGTA",
+			"F5" => "TGGCTCTA",
+			"G5" => "CGACCTTA",
+			"H5" => "AGTGCCAC",
+			"A6" => "CACTTCTG",
+			"B6" => "CGCTAGTA",
+			"C6" => "GGAACGCT",
+			"D6" => "ATGACTCA",
+			"E6" => "GTAGGACC",
+			"F6" => "GTACGCGT",
+			"G6" => "AGATGGCT",
+			"H6" => "ATACGGAC",
+			"A7" => "GAACGTAT",
+			"B7" => "AACCAGCT",
+			"C7" => "GGCGCTTA",
+			"D7" => "CTTCGCAG",
+			"E7" => "CGGCTACA",
+			"F7" => "CTCTACAG",
+			"G7" => "GCTTAATA",
+			"H7" => "ACCTCAGA",
+			"A8" => "CGAATCCT",
+			"B8" => "TAGCAGTG",
+			"C8" => "GTGACATG",
+			"D8" => "CGGCAGAA",
+			"E8" => "CAGCGTGT",
+			"F8" => "GTGTATGC",
+			"G8" => "ACATTGCG",
+			"H8" => "TCTTCGAG",
+			"A9" => "GCAACGTC",
+			"B9" => "GCAGCTCT",
+			"C9" => "GAGGTTAC",
+			"D9" => "CATGAAGT",
+			"E9" => "AGTATGCA",
+			"F9" => "GATGCCTT",
+			"G9" => "GCGAATAC",
+			"H9" => "ATCTGCGA",
+			"A10" => "AACAGGTG",
+			"B10" => "TACCATGA",
+			"C10" => "CCAACTAG",
+			"D10" => "ATAGTCCG",
+			"E10" => "TTAAGCGA",
+			"F10" => "ACGTCCTG",
+			"G10" => "CAGTAATG",
+			"H10" => "TTCCATAG",
+			"A11" => "TGCACAAT",
+			"B11" => "CATGAGGC",
+			"C11" => "ACAGGAGT",
+			"D11" => "AGCCTTCT",
+			"E11" => "TGACTAGT",
+			"F11" => "CGAGTATC",
+			"G11" => "CAATGTCG",
+			"H11" => "GCGTCACG",
+			"A12" => "TTATAGGC",
+			"B12" => "GAGTGCTA",
+			"C12" => "ACGTCTTA",
+			"D12" => "TTGTGCAC",
+			"E12" => "GGCGTTAC",
+			"F12" => "GTCTCGCA",
+			"G12" => "TCTTGACG",
+			"H12" => "GTGCTACT"
+		};
+		
+		# I want the barcode as the key
+		my %nhash = reverse %{$href};
+		
+		return(\%nhash);
+	}
 }
 
 1; # Magic true value required at end of module
@@ -215,6 +406,10 @@ None reported.
 	A list of method names in the module
 	
 	new
+	get_plate_primer_file
+	set_plate_primer_file
+	get_metadata_file
+	set_metadata_file
 
 =back
 
@@ -224,36 +419,60 @@ None reported.
 
 	Title: new
 	Usage: Demultiplexer->new({
-				arg1 => $arg1,
-				arg2 => $arg2
+				plate_primer_file => $file,
 			});
 	Function:
 	Returns: Demultiplexer
-	Args: -arg1 => DESCRIPTION
-		  -arg2 => DESCRIPTION
-	Throws: MyX::Generic::Undef::Params
+	Args: -plate_primer_file => links plates to frameshifted primers
+	Throws: MyX::Generic::Undef::Param
 	Comments: NA
 	See Also: NA
 	
-=head2 get_arg1
+=head2 get_plate_primer_file
 
-	Title: get_arg1
-	Usage: $obj->get_arg1()
-	Function: Returns arg1
+	Title: get_plate_primer_file
+	Usage: $obj->get_plate_primer_file()
+	Function: Returns path to plate primer file
 	Returns: str
 	Args: NA
 	Throws: NA
 	Comments: NA
 	See Also: NA
 	
-=head2 set_arg1
+=head2 set_plate_primer_file
 
-	Title: set_arg1
-	Usage: $obj->set_arg1($arg1)
-	Function: sets the arg1 value
+	Title: set_plate_primer_file
+	Usage: $obj->set_plate_primer_file($file)
+	Function: sets the plate_primer_file value
 	Returns: 1 on success
-	Args: -arg1 => DESCRIPTION
+	Args: -file => Path to plate primer file
 	Throws: MyX::Generic::Undef::Param
+	        MyX::Generic::DoesNotExist::File
+	        MyX::Generic::File::Empty
+	Comments: NA
+	See Also: NA
+	
+=head2 get_metadata_file
+
+	Title: get_metadata_file
+	Usage: $obj->get_metadata_file()
+	Function: Returns path to optional metadata file
+	Returns: str
+	Args: NA
+	Throws: NA
+	Comments: OPTIONAL
+	See Also: NA
+	
+=head2 set_metadata_file
+
+	Title: set_metadata_file
+	Usage: $obj->set_metadata_file($file)
+	Function: sets the path to the metadata file
+	Returns: 1 on success
+	Args: -file => Path to metadata file
+	Throws: MyX::Generic::Undef::Param
+	        MyX::Generic::DoesNotExist::File
+	        MyX::Generic::File::Empty
 	Comments: NA
 	See Also: NA
 
