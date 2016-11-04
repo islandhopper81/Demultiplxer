@@ -124,6 +124,9 @@ my $logger = get_logger();
 			$new_obj->set_index_to_well_file($arg_href->{index_to_well_file});
 			$new_obj->set_index_to_well_href($arg_href->{index_to_well_file});
 		}
+		else {
+			$new_obj->set_index_to_well_href();
+		}
 
 		return $new_obj;
 	}
