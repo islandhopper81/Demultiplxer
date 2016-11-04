@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 27;
+use Test::More tests => 28;
 use Test::Exception;
 
 # others to include
@@ -170,9 +170,27 @@ lives_ok(sub{ $de = Demultiplexer->new({
     is($seq->get_header(), $new_header, "check _update_seq_id for correctness" );
 }
 
+# test _get_default_index_href
+{
+    my $href = Demultiplexer::_get_default_index_href();
+    
+    is( $href->{"CGTCGGT"}, "A1", "_get_default_index_href()" );
+}
+
 # test split_fastq
 {
     $de->split_fastq();
+}
+
+# test when no index to well file is provided
+{
+    my $tmp_dir = tempdir();
+    my $de2 = Demultiplexer->new({
+        plate_primer_file => $plate_primer_file,
+        fastq_file => $fastq_file,
+        output_dir => $tmp_dir
+    });
+    $de2->split_fastq();
 }
 
 
