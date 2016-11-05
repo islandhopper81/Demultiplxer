@@ -159,7 +159,7 @@ lives_ok(sub{ $de = Demultiplexer->new({
 # test _update_seq_id
 {
     my $header = "P0_77775 CCGTTGACTACTACCT-TCAAGTCATG UNC20:346:000000000-AWCC2:1:2108:6913:19538 1:N:0:GATGCCTT";
-    my $new_header = "AB_10 CCGTTGACTACTACCT-TCAAGTCATG UNC20:346:000000000-AWCC2:1:2108:6913:19538 1:N:0:GATGCCTT";
+    my $new_header = "pAwB_10 CCGTTGACTACTACCT-TCAAGTCATG UNC20:346:000000000-AWCC2:1:2108:6913:19538 1:N:0:GATGCCTT";
     my $seq = BioUtils::FastaSeq->new({
         header => $header,
         seq => "ATCTG"

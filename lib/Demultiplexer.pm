@@ -366,7 +366,7 @@ my $logger = get_logger();
 		my ($seq, $plate, $well, $count_id) = @_;
 		
 		my $header = $seq->get_header();
-		my $new_id = $plate . $well . "_" . $count_id;
+		my $new_id = "p" . $plate . "w" . $well . "_" . $count_id;
 		my $new_header;
 		
 		if ( $header =~ m/P\d+_\d+ (.*)/ ) {
