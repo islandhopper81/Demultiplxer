@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 
-# [DESCRIPTION]
+# Demultiplex the output from MT-Toolbox
 
 use strict;
 use warnings;
@@ -41,7 +41,14 @@ check_params();
 ########
 # MAIN #
 ########
+my $de = Demultiplexer->new({
+    plate_primer_file => $plate_primer_file,
+    fastq_file => $fastq_file
+});
 
+$logger->info("Begin demultiplexing");
+$de->demultiplex();
+$logger->info("Finished demultiplexing");
 
 
 ########
@@ -78,7 +85,7 @@ __END__
 
 =head1 NAME
 
-[NAME].pl - [DESCRIPTION]
+demultiplex.pl - Demultiplex the output from MT-Toolbox
 
 
 =head1 VERSION
@@ -88,9 +95,9 @@ This documentation refers to version 0.0.1
 
 =head1 SYNOPSIS
 
-    [NAME].pl
-        -f my_file.txt
-        -v 10
+    demultiplex.pl
+        -p plate_primer_file.txt
+        -f my_seqs.fastq
         
         [--help]
         [--man]
@@ -99,25 +106,36 @@ This documentation refers to version 0.0.1
         [--quiet]
         [--logfile logfile.log]
 
-    --file | -f     Path to an input file
-    --var | -v      Path to an input variable
-    --help | -h     Prints USAGE statement
-    --man           Prints the man page
-    --debug	        Prints Log4perl DEBUG+ messages
-    --verbose       Prints Log4perl INFO+ messages
-    --quiet	        Suppress printing ERROR+ Log4perl messages
-    --logfile       File to save Log4perl messages
+    --plate_primer_file | -p     Path to plate primer file
+    --fastq_file | -f            Path to an input fastq file
+    --help | -h                  Prints USAGE statement
+    --man                        Prints the man page
+    --debug	                     Prints Log4perl DEBUG+ messages
+    --verbose                    Prints Log4perl INFO+ messages
+    --quiet	                     Suppress printing ERROR+ Log4perl messages
+    --logfile                    File to save Log4perl messages
 
 
 =head1 ARGUMENTS
     
-=head2 --file | -f
+=head2 --plate_primer_file | -p
 
-Path to an input file
-    
-=head2 --var | -v
+Path to a the plate primer file.  This is a tab delimited file with three
+columns.  The first column is the plate name.  The second column are the forward
+barcodes used.  The third column are the reverse primers used.  For example:
 
-Path to an input variable   
+CL1 338F_f4_bc2,338F_f5_bc2,338F_f6_bc2 806R_f3,806R_f4,806R_f6
+CL2 338F_f1_bc1,338F_f2_bc1,338F_f3_bc1 806R_f3,806R_f4,806R_f6
+MF1 338F_f4_bc1,338F_f5_bc1,338F_f6_bc1 806R_f1,806R_f2,806R_f3
+MF2 338F_f1_bc2,338F_f2_bc2,338F_f3_bc2 806R_f4,806R_f5,806R_f6
+PiG1    338F_f1_bc2,338F_f2_bc2,338F_f3_bc2 806R_f1,806R_f2,806R_f3
+PiG2    338F_f4_bc1,338F_f5_bc1,338F_f6_bc1 806R_f4,806R_f5,806R_f6
+
+=head2 --fastq_file | -f
+
+Path to an input fastq file.  This file is likely output from MT-Toolbox. The
+MT-Toolbox file that most users will input here is the
+all_categorizable_reads.fastq file 
  
 =head2 [--help | -h]
     
@@ -150,7 +168,14 @@ STDERR.
 
 =head1 DESCRIPTION
 
-[FULL DESCRIPTION]
+This script runs a demultiplexing job.  We use frameshifted primers to include
+more than 96 samples on a 16S sequencing metagenome profiling.  Of course when
+we do the actual sequencing we can only use the 96 illumina barcodes.  But based
+on the frameshifted primers we can further split the 96 samples into their
+subsamples.
+
+Typically this script is ran on one of the output files from MT-Toolbox
+(usually the all_categorizable_reads.fastq file).
 
 =head1 CONFIGURATION AND ENVIRONMENT
     
