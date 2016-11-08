@@ -8,15 +8,18 @@ use Test::Exception;
 use File::Temp qw/ tempfile tempdir /;
 use Cwd;
 use BioUtils::FastaSeq;
+use File::Basename;
 
-# helper subroutines
+# get the directory of this script so I will know where the test data files
+# are located
+my $test_dir = dirname(__FILE__);
 
 
 BEGIN { use_ok( 'Demultiplexer' ); }
 
-my $plate_primer_file = "data/plate_primer_meta.txt";
-my $index_to_well_file = "data/index_to_well.txt";
-my $fastq_file = "data/mttoolbox_output.fastq";
+my $plate_primer_file = "$test_dir/data/plate_primer_meta.txt";
+my $index_to_well_file = "$test_dir/data/index_to_well.txt";
+my $fastq_file = "$test_dir/data/mttoolbox_output.fastq";
 
 # test constructor
 my $de;
@@ -177,9 +180,9 @@ lives_ok(sub{ $de = Demultiplexer->new({
     is( $href->{"CGTCGGT"}, "A1", "_get_default_index_href()" );
 }
 
-# test split_fastq
+# test demultiplex
 {
-    $de->split_fastq();
+    $de->demultiplex();
 }
 
 # test when no index to well file is provided
@@ -190,7 +193,7 @@ lives_ok(sub{ $de = Demultiplexer->new({
         fastq_file => $fastq_file,
         output_dir => $tmp_dir
     });
-    $de2->split_fastq();
+    $de2->demultiplex();
 }
 
 

@@ -72,11 +72,13 @@ my $logger = get_logger();
 
 	# Setters #
 	sub set_plate_primer_file;
+	sub set_index_to_well_file;
 	sub set_index_to_well_href;
 	sub set_fastq_file;
 	sub set_output_dir;
 
 	# Others #
+	sub demultiplex;
 
 
 	#########
@@ -84,6 +86,14 @@ my $logger = get_logger();
 	#########
 	# - print based on metadata file
 	# - what to do with seqs that fail
+	# - what if there is a sample that has no reads
+	
+	# output structure
+	# root/ (given by user)
+	# -- samples/ (contains a file with each sample)
+	# -- experiments/ (contains a dir for each experiment)
+	# -- -- experiment1
+	# -- -- -- metadata.txt
 
 
 	###############
@@ -289,7 +299,7 @@ my $logger = get_logger();
 	##########
 	# Others #
 	##########
-	sub split_fastq {
+	sub demultiplex {
 		my ($self) = @_;
 		
 		# get the primer info
@@ -360,6 +370,8 @@ my $logger = get_logger();
 		
 		# output all the seqs to their files
 		$self->_output_seqs(\%seqs);
+		
+		return 1;
 	}
 	
 	sub _update_seq_id {
@@ -813,6 +825,7 @@ None reported.
 	set_metadata_file
 	get_index_to_well_file
 	set_index_to_well_file
+	set_index_to_well_href
 	get_well_from_index
 
 =back
@@ -822,19 +835,31 @@ None reported.
 =head2 new
 
 	Title: new
-	Usage: Demultiplexer->new({
+	Usage: my $obj = Demultiplexer->new({
 				plate_primer_file => $file,
 				fastq_file => $fastq_file,
 				[output_dir => ,]
 				[metadata_file => ,]
 			});
-	Function:
+	Function: Creates a new Demultiplexer object
 	Returns: Demultiplexer
 	Args: -plate_primer_file => links plates to frameshifted primers
 	      -fastq_file => Fastq file output from MT-Toolbox
 	Throws: MyX::Generic::Undef::Param
 	Comments: If no output_dir is provided the current working directory
 	          is used.
+	See Also: NA
+	
+=head2 demultiplex
+
+	Title: demultiplex
+	Usage: $obj->demultiplex();
+	Function: Runs the demultiplexing operation
+	Returns: 1 on success
+	Args: NA
+	Throws: MyX::Generic::UnmatchedRegex
+	        MyX::Generic
+	Comments: uses BioUtils::FastqIO
 	See Also: NA
 	
 =head2 get_plate_primer_file
@@ -907,6 +932,27 @@ None reported.
 	        MyX::Generic::DoesNotExist::File
 	        MyX::Generic::File::Empty
 	Comments: NA
+	See Also: NA
+	
+=head2 set_index_to_well_href
+
+	Title: set_index_to_well_href
+	Usage: $obj->set_index_to_well_href($file)
+	Function: sets the index_to_well_href_of value in the object
+	Returns: the href
+	Args: -file => Path to index-to-well file
+	Throws: MyX::Generic::Undef::Param
+	        MyX::Generic::File::CannotOpen
+			MyX::Generic::DoesNotExist::File
+	        MyX::Generic::File::Empty
+	Comments: - This overrides any index_to_well information that is already set
+	          in this object.  For example, if you run set_index_to_well_file
+			  to load the index_to_well info and then later run
+			  set_index_to_well_href with some new index_to_well data then the
+			  original index_to_well data is erased.
+			  
+			  - If a file is not given then the default index_to_well data which
+			  is saved in the object will be used.
 	See Also: NA
 	
 =head2 get_well_from_index
