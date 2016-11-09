@@ -402,7 +402,7 @@ my $logger = get_logger();
 		mkdir $dir;
 		
 		foreach my $sample ( keys %{$seqs_href} ) {
-			my $file = "$dir/$sample\.fasta";
+			my $file = _get_out_file_name($dir, $sample);
 			my $fasta_out = BioUtils::FastaIO->new({stream_type => '>',
 													file => $file});
 			
@@ -410,6 +410,23 @@ my $logger = get_logger();
 				$fasta_out->write_seq($seq);
 			}
 		}
+	}
+	
+	sub _get_out_file_name {
+		my ($dir, $sample) = @_;
+		
+		my $file = "$dir/";
+		
+		if ( $sample =~ m/(.*)([ABCDEFH]\d{1,2})/i ) {
+			$file .= "p" . $1 . "w" . $2 . ".fasta";
+		}
+		else {
+			MyX::Generic::UnmatchedRegex->throw(
+				error => "Unknown sample format"
+			);
+		}
+		
+		return($file);
 	}
 	
 	sub _add_seq {

@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 28;
+use Test::More tests => 31;
 use Test::Exception;
 
 # others to include
@@ -178,6 +178,16 @@ lives_ok(sub{ $de = Demultiplexer->new({
     my $href = Demultiplexer::_get_default_index_href();
     
     is( $href->{"CGTCGGT"}, "A1", "_get_default_index_href()" );
+}
+
+# test _get_out_file_name
+{
+    is(Demultiplexer::_get_out_file_name("test", "PiG1A1"),
+       "test/pPiG1wA1.fasta", "_get_out_file_name(PiG1A1)" );
+    is(Demultiplexer::_get_out_file_name("test", "AA1"),
+       "test/pAwA1.fasta", "_get_out_file_name(AA1)" );
+    is(Demultiplexer::_get_out_file_name("test", "1A1"),
+       "test/p1wA1.fasta", "_get_out_file_name(1A1)" );
 }
 
 # test demultiplex
