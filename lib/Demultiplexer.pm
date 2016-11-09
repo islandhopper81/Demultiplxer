@@ -25,7 +25,6 @@ my $logger = get_logger();
 		plate_primer_file => ,
 		fastq_file => ,
 		[output_dir => ,]
-		[metadata_file => ,]
 	})};
 	
 	Readonly my %primers_308 => {
@@ -55,7 +54,6 @@ my $logger = get_logger();
 	# Attributes #
 	my %plate_primer_file_of;
 	my %plate_to_primers_href_of;
-	my %metadata_file_of;
 	my %index_to_well_file_of;
 	my %index_to_well_href_of;
 	my %fastq_file_of;
@@ -63,7 +61,6 @@ my $logger = get_logger();
 	
 	# Getters #
 	sub get_plate_primer_file;
-	sub get_metadata_file;
 	sub get_index_to_well_href;
 	sub get_index_to_well_file;
 	sub get_well_from_index;
@@ -84,16 +81,10 @@ my $logger = get_logger();
 	#########
 	# To Do #
 	#########
-	# - print based on metadata file
 	# - what to do with seqs that fail
 	# - what if there is a sample that has no reads
-	
-	# output structure
-	# root/ (given by user)
-	# -- samples/ (contains a file with each sample)
-	# -- experiments/ (contains a dir for each experiment)
-	# -- -- experiment1
-	# -- -- -- metadata.txt
+	# - summary numbers
+	# - gzip files after they are created
 
 
 	###############
@@ -126,10 +117,6 @@ my $logger = get_logger();
 		$new_obj->set_fastq_file($arg_href->{fastq_file});
 		$new_obj->set_output_dir($arg_href->{output_dir});
 		
-		#if ( defined $arg_href->{metadata_file} ) {
-		#	$new_obj->set_metadata_file($arg_href->{metadata_file});
-		#}
-		
 		if ( defined $arg_href->{index_to_well_file} ) {
 			$new_obj->set_index_to_well_file($arg_href->{index_to_well_file});
 			$new_obj->set_index_to_well_href($arg_href->{index_to_well_file});
@@ -148,12 +135,6 @@ my $logger = get_logger();
 		my ($self) = @_;
 		
 		return $plate_primer_file_of{ident $self};
-	}
-	
-	sub get_metadata_file {
-		my ($self) = @_;
-		
-		return $metadata_file_of{ident $self};
 	}
 	
 	sub get_well_from_index {
@@ -206,20 +187,6 @@ my $logger = get_logger();
 		check_file($file);
 		
 		$plate_primer_file_of{ident $self} = $file;
-		
-		return 1;
-	}
-	
-	sub set_metadata_file {
-		my ($self, $file) = @_;
-		
-		# check if the parameter is defined
-		is_defined($file, "file");
-		
-		# check if the file exists and is non empty
-		check_file($file);
-		
-		$metadata_file_of{ident $self} = $file;
 		
 		return 1;
 	}
@@ -838,8 +805,6 @@ None reported.
 	new
 	get_plate_primer_file
 	set_plate_primer_file
-	get_metadata_file
-	set_metadata_file
 	get_index_to_well_file
 	set_index_to_well_file
 	set_index_to_well_href
@@ -856,7 +821,6 @@ None reported.
 				plate_primer_file => $file,
 				fastq_file => $fastq_file,
 				[output_dir => ,]
-				[metadata_file => ,]
 			});
 	Function: Creates a new Demultiplexer object
 	Returns: Demultiplexer
@@ -897,30 +861,6 @@ None reported.
 	Function: sets the plate_primer_file value
 	Returns: 1 on success
 	Args: -file => Path to plate primer file
-	Throws: MyX::Generic::Undef::Param
-	        MyX::Generic::DoesNotExist::File
-	        MyX::Generic::File::Empty
-	Comments: NA
-	See Also: NA
-	
-=head2 get_metadata_file
-
-	Title: get_metadata_file
-	Usage: $obj->get_metadata_file()
-	Function: Returns path to optional metadata file
-	Returns: str
-	Args: NA
-	Throws: NA
-	Comments: OPTIONAL
-	See Also: NA
-	
-=head2 set_metadata_file
-
-	Title: set_metadata_file
-	Usage: $obj->set_metadata_file($file)
-	Function: sets the path to the metadata file
-	Returns: 1 on success
-	Args: -file => Path to metadata file
 	Throws: MyX::Generic::Undef::Param
 	        MyX::Generic::DoesNotExist::File
 	        MyX::Generic::File::Empty
