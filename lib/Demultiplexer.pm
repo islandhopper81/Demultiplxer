@@ -384,7 +384,7 @@ my $logger = get_logger();
 		
 		my $file = "$dir/";
 		
-		if ( $sample =~ m/(.*)([ABCDEFH]\d{1,2})/i ) {
+		if ( $sample =~ m/(.*)([ABCDEFGH]\d{1,2})/i ) {
 			$file .= "p" . $1 . "w" . $2 . ".fasta";
 		}
 		else {

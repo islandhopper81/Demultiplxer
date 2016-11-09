@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 31;
+use Test::More tests => 32;
 use Test::Exception;
 
 # others to include
@@ -188,6 +188,8 @@ lives_ok(sub{ $de = Demultiplexer->new({
        "test/pAwA1.fasta", "_get_out_file_name(AA1)" );
     is(Demultiplexer::_get_out_file_name("test", "1A1"),
        "test/p1wA1.fasta", "_get_out_file_name(1A1)" );
+    is(Demultiplexer::_get_out_file_name("test", "CL2G11"),
+       "test/pCL2wG11.fasta", "_get_out_file_name(CL2G11)" );
 }
 
 # test demultiplex
