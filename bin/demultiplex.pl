@@ -12,19 +12,22 @@ use Readonly;
 use version; our $VERSION = qv('0.0.1');
 use Log::Log4perl qw(:easy);
 use Log::Log4perl::CommandLine qw(:all);
+use Cwd;
 use UtilSY qw(:all);
 use Demultiplexer;
+
 
 # Subroutines #
 sub check_params;
 sub _is_defined;
 
 # Variables #
-my ($plate_primer_file, $fastq_file, $help, $man);
+my ($plate_primer_file, $fastq_file, $output_dir, $help, $man);
 
 my $options_okay = GetOptions (
     "plate_primer_file|p:s" => \$plate_primer_file,
     "fastq_file|f:s" => \$fastq_file,
+	"output_dir|o:s" => \$output_dir,
     "help|h" => \$help,                  # flag
     "man" => \$man,                     # flag (print full man page)
 );
@@ -43,7 +46,8 @@ check_params();
 ########
 my $de = Demultiplexer->new({
     plate_primer_file => $plate_primer_file,
-    fastq_file => $fastq_file
+    fastq_file => $fastq_file,
+	output_dir => $output_dir
 });
 
 $logger->info("Begin demultiplexing");
@@ -75,6 +79,15 @@ sub check_params {
 					-exitval => 2);
 	}
 	
+	# create and/or check the output dir
+	if ( ! is_defined($output_dir) ) {
+		$output_dir = getcwd();
+	}
+	if ( ! -d $output_dir ) { 
+		pod2usage(-message => "ERROR: --output_dir is not a directory\n\n",
+					-exitval => 2); 
+	}
+	
 	return 1;
 }
 
@@ -98,6 +111,7 @@ This documentation refers to version 0.0.1
     demultiplex.pl
         -p plate_primer_file.txt
         -f my_seqs.fastq
+        -o output_dir/
         
         [--help]
         [--man]
@@ -108,6 +122,7 @@ This documentation refers to version 0.0.1
 
     --plate_primer_file | -p     Path to plate primer file
     --fastq_file | -f            Path to an input fastq file
+    --output_dir | -o            Path to the output directory
     --help | -h                  Prints USAGE statement
     --man                        Prints the man page
     --debug	                     Prints Log4perl DEBUG+ messages
@@ -135,7 +150,12 @@ PiG2    338F_f4_bc1,338F_f5_bc1,338F_f6_bc1 806R_f4,806R_f5,806R_f6
 
 Path to an input fastq file.  This file is likely output from MT-Toolbox. The
 MT-Toolbox file that most users will input here is the
-all_categorizable_reads.fastq file 
+all_categorizable_reads.fastq file
+
+=head2 --output_dir | -o
+
+Path to a directory where output files will be printed.  If no directory is
+specified the current working directory is used.
  
 =head2 [--help | -h]
     
@@ -192,7 +212,9 @@ Readonly
 version
 Log::Log4perl qw(:easy)
 Log::Log4perl::CommandLine qw(:all)
+Cwd
 UtilSY qw(:all)
+Demultiplexer
 
 
 =head1 AUTHOR
