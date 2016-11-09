@@ -358,9 +358,11 @@ my $logger = get_logger();
 		my ($self, $seqs_href) = @_;
 		
 		# create a dir in the output dir called samples
-		my $root_dir = $self->get_output_dir();
-		my $dir = "$root_dir/samples";
-		mkdir $dir;
+		my $dir = $self->get_output_dir();
+		
+		if ( ! -d $dir ) {
+			mkdir $dir;
+		}
 		
 		foreach my $sample ( keys %{$seqs_href} ) {
 			my $file = _get_out_file_name($dir, $sample);
