@@ -78,15 +78,6 @@ my $logger = get_logger();
 	sub demultiplex;
 
 
-	#########
-	# To Do #
-	#########
-	# - what to do with seqs that fail
-	# - what if there is a sample that has no reads
-	# - summary numbers
-	# - gzip files after they are created
-
-
 	###############
 	# Constructor #
 	###############
@@ -294,7 +285,9 @@ my $logger = get_logger();
 		# Read in all the sequences
 		my %seqs = ();  #hash with KEY=>sampleID VALUE=>aref of seqs
 		while ( my $seq = $in->get_next_seq() ) {
+			$logger->debug("######################################");
 			$header = $seq->get_header();
+			$logger->debug("header: $header");
 			
 			eval {
 				$fwd_fs = _get_fwd_fs($header);
@@ -318,6 +311,7 @@ my $logger = get_logger();
 				_update_seq_id($seq, $plate, $well, $count_id);
 				
 				_add_seq($seq->to_FastaSeq(), \%seqs, $plate . $well);
+				$logger->debug("Seq added");
 			};
 			# skip this sequence if any of the regex's fail
 			if ( my $e = Exception::Class->caught('MyX::Generic::UnmatchedRegex') ) {
@@ -431,6 +425,8 @@ my $logger = get_logger();
 			);
 		}
 		
+		$logger->debug("plate found: $plate_found");
+		
 		return($plate_found);
 	}
 	
@@ -447,6 +443,8 @@ my $logger = get_logger();
 				error => "fwd query not found ($fwd_query)"
 			);
 		}
+		
+		$logger->debug("match_fwd found: $match_fwd");
 		
 		return($match_fwd);
 	}
@@ -465,6 +463,8 @@ my $logger = get_logger();
 			);
 		}
 		
+		$logger->debug("match_rev found: $match_rev");
+		
 		return($match_rev);
 	}
 	
@@ -480,6 +480,8 @@ my $logger = get_logger();
 				error => "Cannot find fwd query in $fwd_fs"
 			);
 		}
+		
+		$logger->debug("fwd_query found: $fwd_query");
 		
 		return( $fwd_query );
 	}
@@ -497,6 +499,8 @@ my $logger = get_logger();
 			);
 		}
 		
+		$logger->debug("fwd_fs found: $fwd_fs");
+		
 		return($fwd_fs);
 	}
 	
@@ -512,6 +516,8 @@ my $logger = get_logger();
 				error => "Cannot find rev frameshift barcode in $header"
 			);
 		}
+		
+		$logger->debug("rev_fs found: $rev_fs");
 		
 		return($rev_fs);
 	}
@@ -532,6 +538,8 @@ my $logger = get_logger();
 		# remove the last base
 		chop($index);
 		
+		$logger->debug("index found: $index");
+		
 		return($index);
 	}
 	
@@ -547,6 +555,8 @@ my $logger = get_logger();
 				error => "Cannot find count id in $header"
 			);
 		}
+		
+		$logger->debug("count_id found: $count_id");
 		
 		return($count_id);
 	}
@@ -700,7 +710,7 @@ __END__
 
 =head1 NAME
 
-Demultiplexer - [One line description of module's purpose here]
+Demultiplexer - demultiplexes frameshifted primers from MTToolbox output
 
 
 =head1 VERSION
@@ -712,61 +722,89 @@ This document describes Demultiplexer version 0.0.1
 
     use Demultiplexer;
 
-=for author to fill in:
-    Brief code example(s) here showing commonest usage(s).
-    This section will be as far as many users bother reading
-    so make it as educational and exeplary as possible.
+	# set up the Demultiplexer
+	my $de = Demultiplexer->new({
+		plate_primer_file => $plate_primer_file,
+		fastq_file => $fastq_file,
+		output_dir => $output_dir
+	});
+	
+	# demultiplex
+	$de->demultiplex()
   
   
 =head1 DESCRIPTION
 
-=for author to fill in:
-    Write a full description of the module and its features here.
-    Use subsections (=head2, =head3) as appropriate.
+Demultiplexer provides a framework for demultiplexing frameshifted primers
+frequently used in conjuction with molecule tags.  These frameshifted primers
+allow for multiplexing of many more than samples than the standard 96 illumina
+barcodes.  For more details about frameshifted primers, molecule tagging, and
+processing molecule tagged data please see:
+L<http://www.nature.com/nmeth/journal/v10/n10/abs/nmeth.2634.html>
+L<https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-15-284>
 
+Under the molecule tagging protocol, each well in a 96 well illumina barcoded
+sequencing recation will have sequences with molecule tags of different lengths.
+These different lengths (ie frameshifted primers) can correspond to different
+samples.  This Demulitplexer object takes the all_categrizable_reads.fastq file
+from the MT-Toolbox output and splits the reads into samples based on the
+frameshifted primers.
 
-=head1 DIAGNOSTICS
+Here is the basic algorithm:
 
-=for author to fill in:
-    List every single error and warning message that the module can
-    generate (even the ones that will "never happen"), with a full
-    explanation of each problem, one or more likely causes, and any
-    suggested remedies.
+- foreach sequence in the input fastq file
+	- get the molecule tag (which contains the frameshift) from the seq header
+	- get the illumina barcode from the seq header
+	
+	- get the fwd frameshift sequence from the molecule tag
+	- get the rev frameshift length from the molecule tag
+	
+	- lookup the fwd primer frameshift code using the fwd frameshift sequence
+	- lookup the rev primer frameshift code using the rev frameshift length
+	
+	- lookup the plate using the fwd frameshift primer code and rev frameshift
+	  primer code
+	- lookup the well using the index_to_well_href
+	
+	- update the sequence name
+	- save the sequence using its sample name
+	
+- print each sequence to its sample fasta file
 
-=over
+There are several pieces of information required by Demultiplexer.  However,
+there are also defaults for many of these.  But the defaults may or may not work
+for your sequences, so it's important to carefully consider all of the inputs.
 
-=item C<< Error message here, perhaps with %s placeholders >>
+First, a fastq file of sequecnes as output from MT-Toolbox are always required.
+I recommend always using the all_categorizable_reads.fastq file when
+demultiplexing.
 
-[Description of error here]
+Second, a plate_primer_file is always required.  This file is a tab delimited
+file with three columns.  The first column is the plate name.  The second column
+are the forward frameshift codes used.  The third column are the reverse
+frameshift used codes used.  For example:
 
-=item C<< Another error message here >>
+CL1 338F_f4_bc2,338F_f5_bc2,338F_f6_bc2 806R_f3,806R_f4,806R_f6
+CL2 338F_f1_bc1,338F_f2_bc1,338F_f3_bc1 806R_f3,806R_f4,806R_f6
+MF1 338F_f4_bc1,338F_f5_bc1,338F_f6_bc1 806R_f1,806R_f2,806R_f3
+MF2 338F_f1_bc2,338F_f2_bc2,338F_f3_bc2 806R_f4,806R_f5,806R_f6
+PiG1    338F_f1_bc2,338F_f2_bc2,338F_f3_bc2 806R_f1,806R_f2,806R_f3
+PiG2    338F_f4_bc1,338F_f5_bc1,338F_f6_bc1 806R_f4,806R_f5,806R_f6
 
-[Description of error here]
-
-[Et cetera, et cetera]
-
-=back
-
+In the above example the forward frameshift primer codes are formatted with the
+primer name (e.g. 338F), number of frameshifts (e.g. f4), and frameshift
+sequence code (e.g. bc2).  The frameshift sequence code represents the different
+frameshift sequences used in the primers (e.g. TGA, TTGA, ACT, TACT, etc).  The
+reverse frameshift primers are similar but don't have a frameshift sequence
+code.  However, it is possible to design reverse frameshifted primers that also
+use the frameshift sequence code.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-=for author to fill in:
-    A full explanation of any configuration system(s) used by the
-    module, including the names and locations of any configuration
-    files, and the meaning of any environment variables or properties
-    that can be set. These descriptions must also include details of any
-    configuration language used.
-  
 Demultiplexer requires no configuration files or environment variables.
 
 
 =head1 DEPENDENCIES
-
-=for author to fill in:
-    A list of all the other modules that this module relies upon,
-    including any restrictions on versions, and an indication whether
-    the module is part of the standard Perl distribution, part of the
-    module's distribution, or must be installed separately. ]
 
 Carp
 Readonly
@@ -785,32 +823,24 @@ Cwd
 
 =head1 INCOMPATIBILITIES
 
-=for author to fill in:
-    A list of any modules that this module cannot be used in conjunction
-    with. This may be due to name conflicts in the interface, or
-    competition for system or program resources, or due to internal
-    limitations of Perl (for example, many modules that use source code
-    filters are mutually incompatible).
-
 None reported.
 
 
 =head1 METHODS
 
-=over
-
-=for author to fill in:
-	A list of method names in the module
-	
-	new
-	get_plate_primer_file
-	set_plate_primer_file
-	get_index_to_well_file
-	set_index_to_well_file
-	set_index_to_well_href
-	get_well_from_index
-
-=back
+new
+demultiplex
+get_plate_primer_file
+set_plate_primer_file
+get_index_to_well_file
+set_index_to_well_file
+get_index_to_well_href
+set_index_to_well_href
+get_well_from_index
+get_fastq_file
+set_fastq_file
+get_output_dir
+set_output_dir
 
 =head1 METHODS DESCRIPTION
 
@@ -985,28 +1015,14 @@ None reported.
 
 =head1 BUGS AND LIMITATIONS
 
-=for author to fill in:
-    A list of known problems with the module, together with some
-    indication Whether they are likely to be fixed in an upcoming
-    release. Also a list of restrictions on the features the module
-    does provide: data types that cannot be handled, performance issues
-    and the circumstances in which they may arise, practical
-    limitations on the size of data sets, special cases that are not
-    (yet) handled, etc.
-
 No bugs have been reported.
-
-Please report any bugs or feature requests to
-C<bug-demultiplexer@rt.cpan.org>, or through the web interface at
-L<http://rt.cpan.org>.
 
 =head1 TO DO
 
-= for author to fill in:
-	Include a list of features and/or tasks that have yet to be
-	implemented in this object.
-
-None
+- what to do with seqs that fail
+- what if there is a sample that has no reads
+- summary numbers
+- gzip files after they are created
 
 =head1 AUTHOR
 
