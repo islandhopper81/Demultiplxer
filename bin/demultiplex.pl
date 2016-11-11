@@ -54,7 +54,7 @@ my $ph = Demultiplexer::Param_Handler->new({
 
 $logger->debug("Build Demultiplex Object");
 my $de = Demultiplexer->new({
-    params_handler => $ph
+    param_handler => $ph
 });
 
 $logger->info("Begin demultiplexing");
