@@ -240,7 +240,7 @@ my $logger = get_logger();
 	sub _get_plate {
 		my ($self, $fwd_match, $rev_match) = @_;
 		
-		my $href = $self->get_param_hander()->get_plate_to_primer_href();
+		my $href = $self->get_param_handler()->get_plate_to_primer_href();
 		my $plate_found;
 		foreach my $plate ( keys %{$href} ) {
 			if ( $href->{$plate}{$fwd_match} and
@@ -514,7 +514,7 @@ get_param_handler
 
 	Title: new
 	Usage: my $obj = Demultiplexer->new({
-				param_hander => $param_handler
+				param_handler => $param_handler
 			});
 	Function: Creates a new Demultiplexer object
 	Returns: Demultiplexer
@@ -535,7 +535,7 @@ get_param_handler
 	Comments: uses BioUtils::FastqIO
 	See Also: NA
 	
-=head2 get_param_hander
+=head2 get_param_handler
 
 	Title: get_param_handler
 	Usage: $obj->get_param_handler();
