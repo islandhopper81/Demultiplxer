@@ -1,3 +1,0 @@
-AGT	338F_f1_bc1
-AGTC	338F_f2_bc1
-AGTCA	338F_f1_bc2
