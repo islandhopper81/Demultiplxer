@@ -26,43 +26,26 @@ my $logger = get_logger();
 		fastq_file => ,
 		[output_dir => ,]
 	})};
-	
-	Readonly my %primers_308 => {
-		"TGA"  => "338F_f1_bc1",
-		"TTGA" => "338F_f2_bc1",
-        "CTTGA"  => "338F_f3_bc1",
-        "ACTTGA"  => "338F_f4_bc1",
-        "GACTTGA" => "338F_f5_bc1",
-        "TGACTTGA"  => "338F_f6_bc1",
-        "ACT"  => "338F_f1_bc2",
-        "TACT" => "338F_f2_bc2",
-        "CTACT"  => "338F_f3_bc2",
-        "ACTACT"  => "338F_f4_bc2",
-        "GACTACT" => "338F_f5_bc2",
-        "TGACTACT"  => "338F_f6_bc2",
-	};
-	
-	Readonly my %primers_806 => {
-		"5" => "806R_f1",
-		"6" => "806R_f2",
-		"7" => "806R_f3",
-		"8" => "806R_f4",
-		"9" => "806R_f5",
-		"10" => "806R_f6",
-	};
 
 	# Attributes #
 	my %plate_primer_file_of;
 	my %plate_to_primers_href_of;
 	my %index_to_well_file_of;
 	my %index_to_well_href_of;
+	my %fwd_fs_seq_to_fs_code_file_of;
+	my %fwd_fs_seq_to_fs_code_href_of;
+	my %rev_fs_len_to_fs_code_file_of;
+	my %rev_fs_len_to_fs_code_href_of;
 	my %fastq_file_of;
 	my %output_dir_of;
 	
 	# Getters #
 	sub get_plate_primer_file;
-	sub get_index_to_well_href;
 	sub get_index_to_well_file;
+	sub get_fwd_fs_seq_to_fs_code_file;
+	sub get_fwd_fs_seq_to_fs_code_href;
+	sub get_rev_fs_len_to_fs_code_file;
+	sub get_rev_fs_len_to_fs_code_href;
 	sub get_well_from_index;
 	sub get_fastq_file;
 	sub get_output_dir;
@@ -71,11 +54,18 @@ my $logger = get_logger();
 	sub set_plate_primer_file;
 	sub set_index_to_well_file;
 	sub set_index_to_well_href;
+	sub set_fwd_fs_seq_to_fs_code_file;
+	sub set_fwd_fs_seq_to_fs_code_href;
+	sub set_rev_fs_len_to_fs_code_file;
+	sub set_rev_fs_len_to_fs_code_href;
 	sub set_fastq_file;
 	sub set_output_dir;
 
 	# Others #
 	sub demultiplex;
+	sub print_default_index_href;
+	sub print_default_fwd_fs_seq_to_fs_code;
+	sub print_default_rev_fs_len_to_fs_code;
 
 
 	###############
@@ -101,22 +91,48 @@ my $logger = get_logger();
 
 		# Bless a scalar to instantiate an object
 		my $new_obj = bless \do{my $anon_scalar}, $class;
-
-		# Set Attributes
-		$new_obj->set_plate_primer_file($arg_href->{plate_primer_file});		
-		$new_obj->parse_plate_primer_file();
-		$new_obj->set_fastq_file($arg_href->{fastq_file});
-		$new_obj->set_output_dir($arg_href->{output_dir});
 		
-		if ( defined $arg_href->{index_to_well_file} ) {
-			$new_obj->set_index_to_well_file($arg_href->{index_to_well_file});
-			$new_obj->set_index_to_well_href($arg_href->{index_to_well_file});
-		}
-		else {
-			$new_obj->set_index_to_well_href();
-		}
+		# initialize the object attributes
+		$new_obj->_init($arg_href);
 
 		return $new_obj;
+	}
+	
+	sub _init {
+		my ($self, $arg_href) = @_;
+		
+		# Set Attributes
+		$self->set_plate_primer_file($arg_href->{plate_primer_file});		
+		$self->parse_plate_primer_file();
+		$self->set_fastq_file($arg_href->{fastq_file});
+		$self->set_output_dir($arg_href->{output_dir});
+		
+		my $file = $arg_href->{index_to_well_file};
+		if ( defined $file ) {
+			$self->set_index_to_well_file($file);
+			$self->set_index_to_well_href($file);
+		}
+		else {
+			$self->set_index_to_well_href();
+		}
+		
+		$file = $arg_href->{fwd_fs_seq_to_fs_code_file};
+		if ( defined $file ) {
+			$self->set_fwd_fs_seq_to_fs_code_file($file);
+			$self->set_fwd_fs_seq_to_fs_code_href($file);
+		}
+		else {
+			$self->set_fwd_fs_seq_to_fs_code_href();
+		}
+		
+		$file = $arg_href->{rev_fs_len_to_fs_code_file};
+		if ( defined $file ) {
+			$self->set_rev_fs_len_to_fs_code_file($file);
+			$self->set_rev_fs_len_to_fs_code_href($file);
+		}
+		else {
+			$self->set_rev_fs_len_to_fs_code_href();
+		}
 	}
 
 	###########
@@ -151,6 +167,18 @@ my $logger = get_logger();
 		my ($self) = @_;
 		
 		return $index_to_well_file_of{ident $self};
+	}
+	
+	sub get_fwd_fs_seq_to_fs_code_file {
+		my ($self) = @_;
+		
+		return $fwd_fs_seq_to_fs_code_file_of{ident $self};
+	}
+	
+	sub get_rev_fs_len_to_fs_code_file {
+		my ($self) = @_;
+		
+		return $rev_fs_len_to_fs_code_file_of{ident $self};
 	}
 	
 	sub get_fastq_file {
@@ -227,6 +255,100 @@ my $logger = get_logger();
 		}
 		
 		$index_to_well_href_of{ident $self} = $href;
+		
+		return($href);
+	}
+	
+	sub set_fwd_fs_seq_to_fs_code_file {
+		my ($self, $file) = @_;
+		
+		# check if the parameter is defined
+		is_defined($file, "file");
+		
+		# check if the file exists and is non empty
+		check_file($file);
+		
+		$fwd_fs_seq_to_fs_code_file_of{ident $self} = $file;
+		
+		return 1;
+	}
+	
+	sub set_fwd_fs_seq_to_fs_code_href {
+		my ($self, $file) = @_;
+		
+		# note: this overrides any inforamtion that is already set in this
+		# object.
+		
+		my $href;
+		
+		# save the file
+		eval { $self->set_fwd_fs_seq_to_fs_code_file($file) };
+		if ( my $e = Exception::Class->caught('MyX::Generic::Undef::Param') ) {
+			$href = _get_default_fwd_seq_code_to_fs_code_href();
+		}
+		else {
+			open my $IN, "<", $file or
+				MyX::Generic::File::CannotOpen->throw(
+					error => "Cannot open file ($file)"
+				);
+			
+			my @vals = ();
+			foreach my $line ( <$IN> ) {
+				chomp($line);
+				@vals = split("\t", $line);
+				$href->{$vals[0]} = $vals[1];
+			}
+			close($IN);
+		}
+		
+		$fwd_fs_seq_to_fs_code_href_of{ident $self} = $href;
+		
+		return($href);
+	}
+	
+	sub set_rev_fs_len_to_fs_code_file {
+		my ($self, $file) = @_;
+		
+		# check if the parameter is defined
+		is_defined($file, "file");
+		
+		# check if the file exists and is non empty
+		check_file($file);
+		
+		$rev_fs_len_to_fs_code_file_of{ident $self} = $file;
+		
+		return 1;
+	}
+	
+	sub set_rev_fs_len_to_fs_code_href {
+		my ($self, $file) = @_;
+		
+		# note: this overrides any inforamtion that is already set in this
+		# object.
+		
+		my $href;
+		
+		# save the file
+		eval { $self->set_rev_fs_len_to_fs_code_file($file) };
+		if ( my $e = Exception::Class->caught('MyX::Generic::Undef::Param') ) {
+			$href = _get_default_rev_len_code_to_fs_code_href();
+		}
+		else {
+			open my $IN, "<", $file or
+				MyX::Generic::File::CannotOpen->throw(
+					error => "Cannot open file ($file)"
+				);
+			
+			my @vals = ();
+			foreach my $line ( <$IN> ) {
+				chomp($line);
+				@vals = split("\t", $line);
+				$href->{$vals[0]} = $vals[1];
+			}
+			close($IN);
+		}
+		
+		$rev_fs_len_to_fs_code_href_of{ident $self} = $href;
 		
 		return($href);
 	}
@@ -436,8 +558,9 @@ my $logger = get_logger();
 		my ($self, $fwd_query) = @_;
 		
 		my $match_fwd;
-		if ( defined $primers_308{$fwd_query} ) {
-			$match_fwd = $primers_308{$fwd_query};
+		my $lookup_href = $fwd_fs_seq_to_fs_code_href_of{ident $self};
+		if ( defined $lookup_href->{$fwd_query} ) {
+			$match_fwd = $lookup_href->{$fwd_query};
 		}
 		else {
 			# non matching fwd primer -- throw an error
@@ -455,8 +578,9 @@ my $logger = get_logger();
 		my ($self, $rev_query) = @_;
 		
 		my $match_rev;
-		if ( defined $primers_806{$rev_query} ) {
-			$match_rev = $primers_806{$rev_query};
+		my $lookup_href = $rev_fs_len_to_fs_code_href_of{ident $self};
+		if ( defined $lookup_href->{$rev_query} ) {
+			$match_rev = $lookup_href->{$rev_query};
 		}
 		else {
 			# non matching rev primer -- throw an error
@@ -600,6 +724,65 @@ my $logger = get_logger();
 		return(\%plate_to_frames);
 	}
 	
+	sub print_default_fwd_fs_seq_to_fs_code {
+		my ($self) = @_;
+		
+		print "Default fwd frameshift sequences to frameshift code\n";
+		print Dumper($fwd_fs_seq_to_fs_code_href_of{ident $self});
+		
+		return 1;
+	}
+	
+	sub print_default_rev_fs_len_to_fs_code {
+		my ($self) = @_;
+		
+		print "Default rev frameshift lengths to frameshift code\n";
+		print Dumper($rev_fs_len_to_fs_code_href_of{ident $self});
+		
+		return 1;
+	}
+	
+	sub print_default_index_href {
+		my ($self) = @_;
+		
+		print "Default well to index href\n";
+		print Dumper(_get_default_index_href());
+		
+		return 1;
+	}
+	
+	sub _get_default_fwd_seq_code_to_fs_code_href {
+		my $href = {
+			"TGA"  => "338F_f1_bc1",
+			"TTGA" => "338F_f2_bc1",
+			"CTTGA"  => "338F_f3_bc1",
+			"ACTTGA"  => "338F_f4_bc1",
+			"GACTTGA" => "338F_f5_bc1",
+			"TGACTTGA"  => "338F_f6_bc1",
+			"ACT"  => "338F_f1_bc2",
+			"TACT" => "338F_f2_bc2",
+			"CTACT"  => "338F_f3_bc2",
+			"ACTACT"  => "338F_f4_bc2",
+			"GACTACT" => "338F_f5_bc2",
+			"TGACTACT"  => "338F_f6_bc2",
+		};
+		
+		return($href);
+	}
+	
+	sub _get_default_rev_len_code_to_fs_code_href {
+		my $href = {
+			"5" => "806R_f1",
+			"6" => "806R_f2",
+			"7" => "806R_f3",
+			"8" => "806R_f4",
+			"9" => "806R_f5",
+			"10" => "806R_f6",
+		};
+		
+		return($href);
+	}
+	
 	sub _get_default_index_href {
 		my $href = {
 			"A1" => "CGTCGGT",
@@ -733,6 +916,11 @@ This document describes Demultiplexer version 0.0.1
 	
 	# demultiplex
 	$de->demultiplex()
+	
+	# to view what some of the default settings are
+	$de->print_default_index_href();
+	$de->print_default_fwd_fs_seq_to_fs_code();
+	$de->print_default_rev_fs_len_to_fs_code();
   
   
 =head1 DESCRIPTION
@@ -801,6 +989,40 @@ reverse frameshift primers are similar but don't have a frameshift sequence
 code.  However, it is possible to design reverse frameshifted primers that also
 use the frameshift sequence code.
 
+Third, a index to well mapping file is optionally required.  The default can be
+viewed in the code or by calling the function print_default_index_href().  The
+file, if provided, should be tab delimited file with two columns.  The first
+column is well and the second is the illumina index.  For example:
+
+Sample_Well index
+A1  CGTCGGTA
+B1  GTGTCCAA
+C1  TCCATGCG
+D1  AGGTTCGC
+E1  GTCGAAGC
+F1  ACGGCTGA
+
+Fourth, a forward primer frameshift sequecne to frameshift code mapping file
+that is optionally required.  The default can be viewed in the code or by
+calling the function print_default_fwd_fs_seq_to_fs_code().  This file is a tab
+delimited file with two columns.  The first column is the frameshift sequence
+and the second is the frameshift code.  For example:
+
+TGA	338F_f1_bc1
+TTGA	338F_f2_bc1
+CTTGA	338F_f3_bc1
+
+Fifth, a reverse primer frameshift length (or sequence) to frameshift code
+mapping file that is optionally required.  The default can be viewed in code or
+by calling the function print_default_rev_fs_len_to_fs_code().  This file is a
+tab delimited file with two columns.  The first column is the length of the
+frameshift and the second is the frameshift code.  For exmaple:
+
+5	806R_f1
+6	806R_f2
+7	806R_f3
+
+
 =head1 CONFIGURATION AND ENVIRONMENT
 
 Demultiplexer requires no configuration files or environment variables.
@@ -832,13 +1054,23 @@ None reported.
 
 new
 demultiplex
+print_default_index_href
+print_default_fwd_fs_seq_to_fs_code
+print_default_rev_fs_len_to_fs_code
 get_plate_primer_file
 set_plate_primer_file
 get_index_to_well_file
 set_index_to_well_file
-get_index_to_well_href
 set_index_to_well_href
 get_well_from_index
+get_fwd_fs_seq_to_fs_code_file
+set_fwd_fs_seq_to_fs_code_file
+get_fwd_fs_seq_to_fs_code_href
+set_fwd_fs_seq_to_fs_code_href
+get_rev_fs_len_to_fs_code_file
+set_rev_fs_len_to_fs_code_file
+get_rev_fs_len_to_fs_code_href
+set_rev_fs_len_to_fs_code_href
 get_fastq_file
 set_fastq_file
 get_output_dir
@@ -873,6 +1105,42 @@ set_output_dir
 	Throws: MyX::Generic::UnmatchedRegex
 	        MyX::Generic
 	Comments: uses BioUtils::FastqIO
+	See Also: NA
+	
+=head2 print_default_index_href
+
+	Title: print_default_index_href
+	Usage: $obj->print_default_index_href();
+	Function: prints the default well to index href
+	Returns: 1 on success
+	Args: NA
+	Throws: NA
+	Comments: Use this function if you need to check the defaults to see if they
+	          match your well to illumina index mapping.
+	See Also: NA
+	
+=head2 print_default_fwd_fs_seq_to_fs_code
+
+	Title: print_default_fwd_fs_seq_to_fs_code
+	Usage: $obj->print_default_fwd_fs_seq_to_fs_code();
+	Function: prints the default fwd frameshift seq to frameshift code mapping
+	Returns: 1 on success
+	Args: NA
+	Throws: NA
+	Comments: Use this function if you need to check the defaults to see if they
+	          match your forward primer frameshift sequences and codes.
+	See Also: NA
+	
+=head2 print_default_rev_fs_len_to_fs_code
+
+	Title: print_default_rev_fs_len_to_fs_code
+	Usage: $obj->print_default_rev_fs_len_to_fs_code();
+	Function: prints the default rev frameshift length to frameshift code mapping
+	Returns: 1 on success
+	Args: NA
+	Throws: NA
+	Comments: Use this function if you need to check the defaults to see if they
+	          match your reverse primer frameshift lengths and codes.
 	See Also: NA
 	
 =head2 get_plate_primer_file
@@ -948,12 +1216,124 @@ set_output_dir
 
 	Title: get_well_from_index
 	Usage: $obj->get_well_from_index($index)
-	Function: Returns the well matching the given indes
+	Function: Returns the well matching the given index
 	Returns: str
 	Args: -index => illumina barcode (ie index)
 	Throws: MyX::Generic::Undef::Param
 	        MyX::Generic::Undef
 	Comments: NA
+	See Also: NA
+	
+=head2 get_fwd_fs_seq_to_fs_code_file
+
+	Title: get_fwd_fs_seq_to_fs_code_file
+	Usage: $obj->get_fwd_fs_seq_to_fs_code_file()
+	Function: Returns the fwd_fs_seq_to_fs_code_file
+	Returns: str
+	Args: NA
+	Throws: NA
+	Comments: NA
+	See Also: NA
+	
+=head2 set_fwd_fs_seq_to_fs_code_file
+
+	Title: set_fwd_fs_seq_to_fs_code_file
+	Usage: $obj->set_fwd_fs_seq_to_fs_code_file($file)
+	Function: Sets the file path to the fwd_fs_seq_to_fs_code_file
+	Returns: NA
+	Args: - file => path ot file
+	Throws: MyX::Generic::Undef::Param
+	        MyX::Generic::DoesNotExist::File
+	        MyX::Generic::File::Empty
+	Comments: Optional
+	See Also: NA
+	
+=head2 get_fwd_fs_seq_to_fs_code_href
+
+	Title: get_fwd_fs_seq_to_fs_code_href
+	Usage: $obj->get_fwd_fs_seq_to_fs_code_href()
+	Function: gets the data in fwd_fs_seq_to_fs_code_href
+	Returns: href
+	Args: NA
+	Throws: NA
+	Comments: NA
+	See Also: NA
+	
+=head2 set_fwd_fs_seq_to_fs_code_href
+
+	Title: set_fwd_fs_seq_to_fs_code_href
+	Usage: $obj->set_fwd_fs_seq_to_fs_code_href($href)
+	Function: sets the data in fwd_fs_seq_to_fs_code_href
+	Returns: 1 on success
+	Args: -href => href data
+	Throws: NA
+	Comments: - This overrides any index_to_well information that is already set
+	          in this object.  For example, if you run
+			  set_fwd_fs_seq_to_fs_code_href to load the
+			  fwd_fs_seq_to_fs_code_href info and then later run
+			  set_fwd_fs_seq_to_fs_code_href with some new
+			  fwd_fs_seq_to_fs_code_href data then the
+			  original index_to_well data is erased.
+			  
+			  - If a file is not given then the default
+			  fwd_fs_seq_to_fs_code_href data which is saved in the object will
+			  be used.
+	See Also: NA
+
+=head2 get_rev_fs_len_to_fs_code_file
+
+	Title: get_rev_fs_len_to_fs_code_file
+	Usage: $obj->get_rev_fs_len_to_fs_code_file()
+	Function: Returns the rev_fs_len_to_fs_code_file
+	Returns: str
+	Args: NA
+	Throws: NA
+	Comments: NA
+	See Also: NA
+	
+=head2 set_rev_fs_len_to_fs_code_file
+
+	Title: set_rev_fs_len_to_fs_code_file
+	Usage: $obj->set_rev_fs_len_to_fs_code_file($file)
+	Function: Sets the file path to the rev_fs_len_to_fs_code_file
+	Returns: NA
+	Args: - file => path ot file
+	Throws: MyX::Generic::Undef::Param
+	        MyX::Generic::DoesNotExist::File
+	        MyX::Generic::File::Empty
+	Comments: Optional
+	See Also: NA
+	
+=head2 get_rev_fs_len_to_fs_code_href
+
+	Title: get_rev_fs_len_to_fs_code_href
+	Usage: $obj->get_rev_fs_len_to_fs_code_href()
+	Function: gets the data in rev_fs_len_to_fs_code_href
+	Returns: href
+	Args: NA
+	Throws: NA
+	Comments: NA
+	See Also: NA
+	
+=head2 set_rev_fs_len_to_fs_code_href
+
+	Title: set_rev_fs_len_to_fs_code_href
+	Usage: $obj->set_rev_fs_len_to_fs_code_href($href)
+	Function: sets the data in rev_fs_len_to_fs_code_href
+	Returns: 1 on success
+	Args: -href => href data
+	Throws: NA
+	Comments: - This overrides any index_to_well information that is already set
+	          in this object.  For example, if you run
+			  set_rev_fs_len_to_fs_code_href to load the
+			  rev_fs_len_to_fs_code_href info and then later run
+			  set_rev_fs_len_to_fs_code_href with some new
+			  rev_fs_len_to_fs_code_href data then the
+			  original index_to_well data is erased.
+			  
+			  - If a file is not given then the default
+			  rev_fs_len_to_fs_code_href data which is saved in the object will
+			  be used.
 	See Also: NA
 	
 =head2 parse_plate_primer_file
@@ -1025,6 +1405,7 @@ No bugs have been reported.
 - what if there is a sample that has no reads
 - summary numbers
 - gzip files after they are created
+- refactor the parameters to a param_handler object
 
 =head1 AUTHOR
 

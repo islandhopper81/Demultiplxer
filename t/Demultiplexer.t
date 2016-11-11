@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 32;
+use Test::More tests => 43;
 use Test::Exception;
 
 # others to include
@@ -20,6 +20,8 @@ BEGIN { use_ok( 'Demultiplexer' ); }
 my $plate_primer_file = "$test_dir/data/plate_primer_meta.txt";
 my $index_to_well_file = "$test_dir/data/index_to_well.txt";
 my $fastq_file = "$test_dir/data/mttoolbox_output.fastq";
+my $fwd_fs_seq = "$test_dir/data/fwd_fs_seq_to_fs_code.txt";
+my $rev_fs_len = "$test_dir/data/rev_fs_len_to_fs_code.txt";
 
 # test constructor
 my $de;
@@ -102,6 +104,52 @@ lives_ok(sub{ $de = Demultiplexer->new({
     is( $de->get_well_from_index("CGTCGGT"),
        "A1",
        "get_well_from_index(CGTCGGT)" );
+}
+
+# test set_fwd_fs_seq_to_fs_code_file
+{
+    throws_ok(sub{ $de->set_fwd_fs_seq_to_fs_code_file() },
+                  'MyX::Generic::Undef::Param',
+                  "caught - set_fwd_fs_seq_to_fs_code_file()" );
+    lives_ok(sub{ $de->set_fwd_fs_seq_to_fs_code_file($fwd_fs_seq) },
+             "expect to live - set_fwd_fs_seq_to_fs_code_file(file)" );
+}
+
+# test get_fwd_fs_seq_to_fs_code_file
+{
+    is( $de->get_fwd_fs_seq_to_fs_code_file(), $fwd_fs_seq,
+       "get_fwd_fs_seq_to_fs_code_file()" );
+}
+
+# test set_fwd_fs_seq_to_fs_code_href
+{
+    lives_ok(sub{ $de->set_fwd_fs_seq_to_fs_code_href($fwd_fs_seq) },
+             "expected to live - set_fwd_fs_seq_to_fs_code_href(fwd_fs_seq)" );
+    lives_ok(sub{ $de->set_fwd_fs_seq_to_fs_code_href() },
+             "expected to live - set_fwd_fs_seq_to_fs_code_href" );
+}
+
+# test set_rev_fs_len_to_fs_code_file
+{
+    throws_ok(sub{ $de->set_rev_fs_len_to_fs_code_file() },
+                  'MyX::Generic::Undef::Param',
+                  "caught - set_rev_fs_len_to_fs_code_file()" );
+    lives_ok(sub{ $de->set_rev_fs_len_to_fs_code_file($rev_fs_len) },
+             "expect to live - set_rev_fs_len_to_fs_code_file(file)" );
+}
+
+# test get_rev_fs_len_to_fs_code_file
+{
+    is( $de->get_rev_fs_len_to_fs_code_file(), $rev_fs_len,
+       "get_rev_fs_len_to_fs_code_file()" );
+}
+
+# test set_rev_fs_len_to_fs_code_href
+{
+    lives_ok(sub{ $de->set_rev_fs_len_to_fs_code_href($rev_fs_len) },
+             "expected to live - set_rev_fs_len_to_fs_code_href(rev_fs_len)" );
+    lives_ok(sub{ $de->set_rev_fs_len_to_fs_code_href() },
+             "expected to live - set_rev_fs_len_to_fs_code_href" );
 }
 
 # test parse_plate_primer_file
@@ -197,7 +245,8 @@ lives_ok(sub{ $de = Demultiplexer->new({
     $de->demultiplex();
 }
 
-# test when no index to well file is provided
+# test when no index to well or fs to fs code files are provided
+# so this tests the default hrefs that are set in the object
 {
     my $tmp_dir = tempdir();
     my $de2 = Demultiplexer->new({
@@ -205,7 +254,30 @@ lives_ok(sub{ $de = Demultiplexer->new({
         fastq_file => $fastq_file,
         output_dir => $tmp_dir
     });
-    $de2->demultiplex();
+    lives_ok(sub{ $de2->demultiplex() },
+             "expected to live -- demultiplex(no index to well file)" );
+    
+    #de2->print_default_index_href();
+    #$de2->print_default_fwd_fs_seq_to_fs_code();
+    #$de2->print_default_rev_fs_len_to_fs_code();
+}
+
+# test when a custom index to well file is used
+{
+    ;
+    # I'm pretty sure this works, but I should write test code later
+}
+
+# test when a custom fwd_fs_seq_to_fs_code file is used
+{
+    ;
+    # I'm pretty sure this works, but I should write test code later
+}
+
+# test when a custom rev_fs_len_to_fs_code file is used
+{
+    ;
+    # I'm pretty sure this works, but I should write test code later
 }
 
 
