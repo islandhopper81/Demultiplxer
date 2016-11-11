@@ -15,6 +15,7 @@ use Log::Log4perl::CommandLine qw(:all);
 use Cwd;
 use UtilSY qw(:all);
 use Demultiplexer;
+use Demultiplexer::Param_Handler;
 
 
 # Subroutines #
@@ -44,10 +45,16 @@ check_params();
 ########
 # MAIN #
 ########
-my $de = Demultiplexer->new({
-    plate_primer_file => $plate_primer_file,
+$logger->debug("Build Demultiplex::Param_Handler Object");
+my $ph = Demultiplexer::Param_Handler->new({
+	plate_primer_file => $plate_primer_file,
     fastq_file => $fastq_file,
 	output_dir => $output_dir
+});
+
+$logger->debug("Build Demultiplex Object");
+my $de = Demultiplexer->new({
+    params_handler => $ph
 });
 
 $logger->info("Begin demultiplexing");
