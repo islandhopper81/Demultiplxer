@@ -30,7 +30,7 @@ my $logger = get_logger();
 	my %param_handler_of;
 	
 	# Getters #
-	sub get_params_handler_of;
+	sub get_param_handler;
 
 	# Setters #
 	
@@ -72,7 +72,7 @@ my $logger = get_logger();
 	###########
 	# Getters #
 	###########
-	sub get_param_hander {
+	sub get_param_handler {
 		my ($self) = @_;
 		
 		return $param_handler_of{ident $self};
