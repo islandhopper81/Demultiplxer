@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 43;
+use Test::More tests => 29;
 use Test::Exception;
 
 # others to include
@@ -12,33 +12,33 @@ use File::Basename;
 
 # get the directory of this script so I will know where the test data files
 # are located
-my $test_dir = dirname(__FILE__);
+my $test_dir = dirname(__FILE__) . "/../";
 
 
-BEGIN { use_ok( 'Demultiplexer' ); }
+BEGIN { use_ok( 'Demultiplexer::Param_Handler' ); }
 
 my $plate_primer_file = "$test_dir/data/plate_primer_meta.txt";
 my $index_to_well_file = "$test_dir/data/index_to_well.txt";
 my $fastq_file = "$test_dir/data/mttoolbox_output.fastq";
-my $fwd_fs_seq = "$test_dir/data/fwd_fs_seq_to_fs_code.txt";
-my $rev_fs_len = "$test_dir/data/rev_fs_len_to_fs_code.txt";
+my $fwd_fs_seq = "$test_dir/data/fwd_fs_coding.txt";
+my $rev_fs_len = "$test_dir/data/rev_fs_coding.txt";
 
 # test constructor
 my $de;
-throws_ok(sub{ $de = Demultiplexer->new() },
+throws_ok(sub{ $de = Demultiplexer::Param_Handler->new() },
           'MyX::Generic::Undef::Param',
-          "caught - Demultiplexer->new()" );
-throws_ok(sub{ $de = Demultiplexer->new({
+          "caught - Demultiplexer::Param_Handler->new()" );
+throws_ok(sub{ $de = Demultiplexer::Param_Handler->new({
                         plate_primer_file => $plate_primer_file}) },
           'MyX::Generic::Undef::Param',
-          "caught - Demultiplexer->new(missing fastq_file)" );
-throws_ok(sub{ $de = Demultiplexer->new({
+          "caught - Demultiplexer::Param_Handler->new(missing fastq_file)" );
+throws_ok(sub{ $de = Demultiplexer::Param_Handler->new({
     plate_primer_file => $plate_primer_file,
     fastq_file => "blah"
 }) },
         'MyX::Generic::DoesNotExist::File',
-        "caught - Demultiplexer->new(bad fastq_file)" );
-lives_ok(sub{ $de = Demultiplexer->new({
+        "caught - Demultiplexer::Param_Handler->new(bad fastq_file)" );
+lives_ok(sub{ $de = Demultiplexer::Param_Handler->new({
                         plate_primer_file => $plate_primer_file,
                         fastq_file => $fastq_file}) },
          "expected to live - constructor" );
@@ -56,26 +56,22 @@ lives_ok(sub{ $de = Demultiplexer->new({
     is( $de->get_output_dir(), $tmp_dir, "was the dir set correctly" );
 }
 
-# test get_plate_primer_file
+# test get_plate_to_primer_file
 {
-    is( $de->get_plate_primer_file(),
+    is( $de->get_plate_to_primer_file(),
        $plate_primer_file,
-       "get_plate_primer_file()");
+       "get_plate_to_primer_file()");
+}
+
+# test get_plate_to_primer_href
+{
+    lives_ok(sub{ $de->get_plate_to_primer_href() },
+             "expected to live - get_plate_to_primer_href" );
 }
 
 # test get_fastq_file
 {
     is( $de->get_fastq_file(), $fastq_file, "get_fastq_file()");
-}
-
-# test set_metadata_file
-{
-    ;
-}
-
-# test get_metadata_file
-{
-    ;
 }
 
 # test set_index_to_well_file
@@ -106,50 +102,50 @@ lives_ok(sub{ $de = Demultiplexer->new({
        "get_well_from_index(CGTCGGT)" );
 }
 
-# test set_fwd_fs_seq_to_fs_code_file
+# test set_fwd_fs_coding_file
 {
-    throws_ok(sub{ $de->set_fwd_fs_seq_to_fs_code_file() },
+    throws_ok(sub{ $de->set_fwd_fs_coding_file() },
                   'MyX::Generic::Undef::Param',
-                  "caught - set_fwd_fs_seq_to_fs_code_file()" );
-    lives_ok(sub{ $de->set_fwd_fs_seq_to_fs_code_file($fwd_fs_seq) },
-             "expect to live - set_fwd_fs_seq_to_fs_code_file(file)" );
+                  "caught - set_fwd_fs_coding_file()" );
+    lives_ok(sub{ $de->set_fwd_fs_coding_file($fwd_fs_seq) },
+             "expect to live - set_fwd_fs_coding_file(file)" );
 }
 
-# test get_fwd_fs_seq_to_fs_code_file
+# test get_fwd_fs_coding_file
 {
-    is( $de->get_fwd_fs_seq_to_fs_code_file(), $fwd_fs_seq,
-       "get_fwd_fs_seq_to_fs_code_file()" );
+    is( $de->get_fwd_fs_coding_file(), $fwd_fs_seq,
+       "get_fwd_fs_coding_file()" );
 }
 
-# test set_fwd_fs_seq_to_fs_code_href
+# test set_fwd_fs_coding_href
 {
-    lives_ok(sub{ $de->set_fwd_fs_seq_to_fs_code_href($fwd_fs_seq) },
-             "expected to live - set_fwd_fs_seq_to_fs_code_href(fwd_fs_seq)" );
-    lives_ok(sub{ $de->set_fwd_fs_seq_to_fs_code_href() },
-             "expected to live - set_fwd_fs_seq_to_fs_code_href" );
+    lives_ok(sub{ $de->set_fwd_fs_coding_href($fwd_fs_seq) },
+             "expected to live - set_fwd_fs_coding_href(fwd_fs_seq)" );
+    lives_ok(sub{ $de->set_fwd_fs_coding_href() },
+             "expected to live - set_fwd_fs_coding_href" );
 }
 
-# test set_rev_fs_len_to_fs_code_file
+# test set_rev_fs_coding_file
 {
-    throws_ok(sub{ $de->set_rev_fs_len_to_fs_code_file() },
+    throws_ok(sub{ $de->set_rev_fs_coding_file() },
                   'MyX::Generic::Undef::Param',
-                  "caught - set_rev_fs_len_to_fs_code_file()" );
-    lives_ok(sub{ $de->set_rev_fs_len_to_fs_code_file($rev_fs_len) },
-             "expect to live - set_rev_fs_len_to_fs_code_file(file)" );
+                  "caught - set_rev_fs_coding_file()" );
+    lives_ok(sub{ $de->set_rev_fs_coding_file($rev_fs_len) },
+             "expect to live - set_rev_fs_coding_file(file)" );
 }
 
-# test get_rev_fs_len_to_fs_code_file
+# test get_rev_fs_coding_file
 {
-    is( $de->get_rev_fs_len_to_fs_code_file(), $rev_fs_len,
-       "get_rev_fs_len_to_fs_code_file()" );
+    is( $de->get_rev_fs_coding_file(), $rev_fs_len,
+       "get_rev_fs_coding_file()" );
 }
 
-# test set_rev_fs_len_to_fs_code_href
+# test set_rev_fs_coding_href
 {
-    lives_ok(sub{ $de->set_rev_fs_len_to_fs_code_href($rev_fs_len) },
-             "expected to live - set_rev_fs_len_to_fs_code_href(rev_fs_len)" );
-    lives_ok(sub{ $de->set_rev_fs_len_to_fs_code_href() },
-             "expected to live - set_rev_fs_len_to_fs_code_href" );
+    lives_ok(sub{ $de->set_rev_fs_coding_href($rev_fs_len) },
+             "expected to live - set_rev_fs_coding_href(rev_fs_len)" );
+    lives_ok(sub{ $de->set_rev_fs_coding_href() },
+             "expected to live - set_rev_fs_coding_href" );
 }
 
 # test parse_plate_primer_file
@@ -161,105 +157,22 @@ lives_ok(sub{ $de = Demultiplexer->new({
         "get primer frame {CL1}{338F_f4_bc2}" );
 }
 
-# test _get_count_id
-{
-    my $header = "\@P0_77775 CCGTTGACTACTACCT-TCAAGTCATG UNC20:346:000000000-AWCC2:1:2108:6913:19538 1:N:0:GATGCCTT";
-    is( Demultiplexer::_get_count_id($header), "77775", "_get_count_id()" );
-}
-
-# test _get_fwd_fs
-{
-    my $header = "\@P0_77775 CCGTTGACTACTACCT-TCAAGTCATG UNC20:346:000000000-AWCC2:1:2108:6913:19538 1:N:0:GATGCCTT";
-    is( Demultiplexer::_get_fwd_fs($header), "CCGTTGACTACTACCT", "_get_fwd_fs()" );
-}
-
-# test _get_rev_fs
-{
-    my $header = "\@P0_77775 CCGTTGACTACTACCT-TCAAGTCATG UNC20:346:000000000-AWCC2:1:2108:6913:19538 1:N:0:GATGCCTT";
-    is( Demultiplexer::_get_rev_fs($header), "TCAAGTCATG", "_get_rev_fs()" );
-}
-
-# test _get_index
-{
-    my $header = "\@P0_77775 CCGTTGACTACTACCT-TCAAGTCATG UNC20:346:000000000-AWCC2:1:2108:6913:19538 1:N:0:GATGCCTT";
-    is( Demultiplexer::_get_index($header), "GATGCCT", "_get_index()" );
-}
-
-# test _get_fwd_query
-{
-    my $fwd_fs = "CCGTTGACTACTACCT";
-    is( Demultiplexer::_get_fwd_query($fwd_fs), "TGACTACT", "_get_fwd_query()" );
-}
-
-# test _get_plate
-{
-    my $fwd_match = "338F_f6_bc2";
-    my $rev_match = "806R_f3";
-    is( $de->_get_plate($fwd_match, $rev_match), "CL1", "_get_plate()" );
-}
-
-# test _add_seq
-{
-    my $seq_href = {};
-    
-    lives_ok(sub{ Demultiplexer::_add_seq(1, $seq_href, "A") },
-             "expected to live - _add_seq" );
-    is_deeply( $seq_href->{"A"}, [1], "check what I just added" );
-}
-
-# test _update_seq_id
-{
-    my $header = "P0_77775 CCGTTGACTACTACCT-TCAAGTCATG UNC20:346:000000000-AWCC2:1:2108:6913:19538 1:N:0:GATGCCTT";
-    my $new_header = "pAwB_10 CCGTTGACTACTACCT-TCAAGTCATG UNC20:346:000000000-AWCC2:1:2108:6913:19538 1:N:0:GATGCCTT";
-    my $seq = BioUtils::FastaSeq->new({
-        header => $header,
-        seq => "ATCTG"
-    });
-
-    lives_ok(sub{ Demultiplexer::_update_seq_id($seq, "A", "B", "10") },
-             "expected to live - _update_seq_id");
-    is($seq->get_header(), $new_header, "check _update_seq_id for correctness" );
-}
-
 # test _get_default_index_href
 {
-    my $href = Demultiplexer::_get_default_index_href();
+    my $href = Demultiplexer::Param_Handler::_get_default_index_href();
     
     is( $href->{"CGTCGGT"}, "A1", "_get_default_index_href()" );
-}
-
-# test _get_out_file_name
-{
-    is(Demultiplexer::_get_out_file_name("test", "PiG1A1"),
-       "test/pPiG1wA1.fasta", "_get_out_file_name(PiG1A1)" );
-    is(Demultiplexer::_get_out_file_name("test", "AA1"),
-       "test/pAwA1.fasta", "_get_out_file_name(AA1)" );
-    is(Demultiplexer::_get_out_file_name("test", "1A1"),
-       "test/p1wA1.fasta", "_get_out_file_name(1A1)" );
-    is(Demultiplexer::_get_out_file_name("test", "CL2G11"),
-       "test/pCL2wG11.fasta", "_get_out_file_name(CL2G11)" );
-}
-
-# test demultiplex
-{
-    $de->demultiplex();
 }
 
 # test when no index to well or fs to fs code files are provided
 # so this tests the default hrefs that are set in the object
 {
     my $tmp_dir = tempdir();
-    my $de2 = Demultiplexer->new({
+    my $de2 = Demultiplexer::Param_Handler->new({
         plate_primer_file => $plate_primer_file,
         fastq_file => $fastq_file,
         output_dir => $tmp_dir
     });
-    lives_ok(sub{ $de2->demultiplex() },
-             "expected to live -- demultiplex(no index to well file)" );
-    
-    #de2->print_default_index_href();
-    #$de2->print_default_fwd_fs_seq_to_fs_code();
-    #$de2->print_default_rev_fs_len_to_fs_code();
 }
 
 # test when a custom index to well file is used
@@ -268,13 +181,13 @@ lives_ok(sub{ $de = Demultiplexer->new({
     # I'm pretty sure this works, but I should write test code later
 }
 
-# test when a custom fwd_fs_seq_to_fs_code file is used
+# test when a custom fwd_fs_coding file is used
 {
     ;
     # I'm pretty sure this works, but I should write test code later
 }
 
-# test when a custom rev_fs_len_to_fs_code file is used
+# test when a custom rev_fs_coding file is used
 {
     ;
     # I'm pretty sure this works, but I should write test code later

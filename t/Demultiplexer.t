@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 43;
+use Test::More tests => 19;
 use Test::Exception;
 
 # others to include
@@ -16,150 +16,34 @@ my $test_dir = dirname(__FILE__);
 
 
 BEGIN { use_ok( 'Demultiplexer' ); }
+BEGIN { use_ok( 'Demultiplexer::Param_Handler'); }
 
 my $plate_primer_file = "$test_dir/data/plate_primer_meta.txt";
 my $index_to_well_file = "$test_dir/data/index_to_well.txt";
 my $fastq_file = "$test_dir/data/mttoolbox_output.fastq";
 my $fwd_fs_seq = "$test_dir/data/fwd_fs_seq_to_fs_code.txt";
 my $rev_fs_len = "$test_dir/data/rev_fs_len_to_fs_code.txt";
+my $tmp_dir = tempdir();
+
+# make a Demultiplex::Param_Handler for testing
+my $ph;
+lives_ok(sub {
+    $ph = Demultiplexer::Param_Handler->new({
+        plate_primer_file => $plate_primer_file,
+        fastq_file => $fastq_file,
+        output_dir => $tmp_dir
+    })
+}, "expected to live -- making Demultiplexer::Param_Handler object" );
 
 # test constructor
 my $de;
 throws_ok(sub{ $de = Demultiplexer->new() },
           'MyX::Generic::Undef::Param',
           "caught - Demultiplexer->new()" );
-throws_ok(sub{ $de = Demultiplexer->new({
-                        plate_primer_file => $plate_primer_file}) },
-          'MyX::Generic::Undef::Param',
-          "caught - Demultiplexer->new(missing fastq_file)" );
-throws_ok(sub{ $de = Demultiplexer->new({
-    plate_primer_file => $plate_primer_file,
-    fastq_file => "blah"
-}) },
-        'MyX::Generic::DoesNotExist::File',
-        "caught - Demultiplexer->new(bad fastq_file)" );
 lives_ok(sub{ $de = Demultiplexer->new({
-                        plate_primer_file => $plate_primer_file,
-                        fastq_file => $fastq_file}) },
+                        param_handler => $ph}) },
          "expected to live - constructor" );
 
-# test get_output_dir
-{
-    is( $de->get_output_dir(), getcwd(), "get_output_dir(DEFAULT)" );
-}
-
-# test set_output_dir
-{
-    my $tmp_dir = tempdir();
-    lives_ok(sub{ $de->set_output_dir($tmp_dir) },
-             "expected to live - set_output_dir($tmp_dir)" );
-    is( $de->get_output_dir(), $tmp_dir, "was the dir set correctly" );
-}
-
-# test get_plate_primer_file
-{
-    is( $de->get_plate_primer_file(),
-       $plate_primer_file,
-       "get_plate_primer_file()");
-}
-
-# test get_fastq_file
-{
-    is( $de->get_fastq_file(), $fastq_file, "get_fastq_file()");
-}
-
-# test set_metadata_file
-{
-    ;
-}
-
-# test get_metadata_file
-{
-    ;
-}
-
-# test set_index_to_well_file
-{
-    throws_ok(sub{ $de->set_index_to_well_file() },
-                  'MyX::Generic::Undef::Param',
-                  "caught - set_index_to_well_file()" );
-    lives_ok(sub{ $de->set_index_to_well_file($index_to_well_file) },
-             "expect to live - set_index_to_well_file(file)" );
-}
-
-# test get_index_to_well_file
-{
-    is( $de->get_index_to_well_file(), $index_to_well_file,
-       "get_index_to_well_file()" );
-}
-
-# test set_index_to_well_href
-{
-    lives_ok(sub{ $de->set_index_to_well_href($index_to_well_file) },
-             "expected to live - set_index_to_well_href" );
-}
-
-# test get_well_from_index
-{
-    is( $de->get_well_from_index("CGTCGGT"),
-       "A1",
-       "get_well_from_index(CGTCGGT)" );
-}
-
-# test set_fwd_fs_seq_to_fs_code_file
-{
-    throws_ok(sub{ $de->set_fwd_fs_seq_to_fs_code_file() },
-                  'MyX::Generic::Undef::Param',
-                  "caught - set_fwd_fs_seq_to_fs_code_file()" );
-    lives_ok(sub{ $de->set_fwd_fs_seq_to_fs_code_file($fwd_fs_seq) },
-             "expect to live - set_fwd_fs_seq_to_fs_code_file(file)" );
-}
-
-# test get_fwd_fs_seq_to_fs_code_file
-{
-    is( $de->get_fwd_fs_seq_to_fs_code_file(), $fwd_fs_seq,
-       "get_fwd_fs_seq_to_fs_code_file()" );
-}
-
-# test set_fwd_fs_seq_to_fs_code_href
-{
-    lives_ok(sub{ $de->set_fwd_fs_seq_to_fs_code_href($fwd_fs_seq) },
-             "expected to live - set_fwd_fs_seq_to_fs_code_href(fwd_fs_seq)" );
-    lives_ok(sub{ $de->set_fwd_fs_seq_to_fs_code_href() },
-             "expected to live - set_fwd_fs_seq_to_fs_code_href" );
-}
-
-# test set_rev_fs_len_to_fs_code_file
-{
-    throws_ok(sub{ $de->set_rev_fs_len_to_fs_code_file() },
-                  'MyX::Generic::Undef::Param',
-                  "caught - set_rev_fs_len_to_fs_code_file()" );
-    lives_ok(sub{ $de->set_rev_fs_len_to_fs_code_file($rev_fs_len) },
-             "expect to live - set_rev_fs_len_to_fs_code_file(file)" );
-}
-
-# test get_rev_fs_len_to_fs_code_file
-{
-    is( $de->get_rev_fs_len_to_fs_code_file(), $rev_fs_len,
-       "get_rev_fs_len_to_fs_code_file()" );
-}
-
-# test set_rev_fs_len_to_fs_code_href
-{
-    lives_ok(sub{ $de->set_rev_fs_len_to_fs_code_href($rev_fs_len) },
-             "expected to live - set_rev_fs_len_to_fs_code_href(rev_fs_len)" );
-    lives_ok(sub{ $de->set_rev_fs_len_to_fs_code_href() },
-             "expected to live - set_rev_fs_len_to_fs_code_href" );
-}
-
-# test parse_plate_primer_file
-{
-    my $primer_to_frames;
-    lives_ok(sub{ $primer_to_frames = $de->parse_plate_primer_file() },
-             "expected to live - parse_plate_primer_file" );
-    is ( $primer_to_frames->{"CL1"}{"338F_f4_bc2"}, 1,
-        "get primer frame {CL1}{338F_f4_bc2}" );
-}
 
 # test _get_count_id
 {
@@ -221,13 +105,6 @@ lives_ok(sub{ $de = Demultiplexer->new({
     is($seq->get_header(), $new_header, "check _update_seq_id for correctness" );
 }
 
-# test _get_default_index_href
-{
-    my $href = Demultiplexer::_get_default_index_href();
-    
-    is( $href->{"CGTCGGT"}, "A1", "_get_default_index_href()" );
-}
-
 # test _get_out_file_name
 {
     is(Demultiplexer::_get_out_file_name("test", "PiG1A1"),
@@ -242,24 +119,8 @@ lives_ok(sub{ $de = Demultiplexer->new({
 
 # test demultiplex
 {
-    $de->demultiplex();
-}
-
-# test when no index to well or fs to fs code files are provided
-# so this tests the default hrefs that are set in the object
-{
-    my $tmp_dir = tempdir();
-    my $de2 = Demultiplexer->new({
-        plate_primer_file => $plate_primer_file,
-        fastq_file => $fastq_file,
-        output_dir => $tmp_dir
-    });
-    lives_ok(sub{ $de2->demultiplex() },
-             "expected to live -- demultiplex(no index to well file)" );
-    
-    #de2->print_default_index_href();
-    #$de2->print_default_fwd_fs_seq_to_fs_code();
-    #$de2->print_default_rev_fs_len_to_fs_code();
+    #$de->demultiplex();
+    ;
 }
 
 # test when a custom index to well file is used
