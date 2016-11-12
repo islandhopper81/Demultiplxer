@@ -136,7 +136,7 @@ my $logger = get_logger();
 				
 				# get the plate and well for the read
 				$plate = $self->_get_plate($match_fwd, $match_rev);
-				$well = $self->get_well_from_index($index);
+				$well = $self->get_param_handler()->get_well_from_index($index);
 				
 				_update_seq_id($seq, $plate, $well, $count_id);
 				
