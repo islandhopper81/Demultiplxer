@@ -188,7 +188,7 @@ my $logger = get_logger();
 		my ($self, $seqs_href) = @_;
 		
 		# create a dir in the output dir called samples
-		my $dir = $self->get_output_dir();
+		my $dir = $self->get_param_handler()->get_output_dir();
 		
 		if ( ! -d $dir ) {
 			mkdir $dir;
