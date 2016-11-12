@@ -64,7 +64,7 @@ my $logger = get_logger();
 	sub set_rev_fs_coding_href;
 	sub set_fastq_file;
 	sub set_output_dir;
-
+	
 	# Others #
 	sub parse_plate_primer_file;
 	sub print_default_params;
