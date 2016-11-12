@@ -266,7 +266,7 @@ my $logger = get_logger();
 		my ($self, $fwd_query) = @_;
 		
 		my $match_fwd;
-		my $lookup_href = $self->get_fwd_fs_coding_href();
+		my $lookup_href = $self->get_param_handler()->get_fwd_fs_coding_href();
 		if ( defined $lookup_href->{$fwd_query} ) {
 			$match_fwd = $lookup_href->{$fwd_query};
 		}
@@ -286,7 +286,7 @@ my $logger = get_logger();
 		my ($self, $rev_query) = @_;
 		
 		my $match_rev;
-		my $lookup_href = $self->get_rev_fs_coding_href();
+		my $lookup_href = $self->get_param_handler()->get_rev_fs_coding_href();
 		if ( defined $lookup_href->{$rev_query} ) {
 			$match_rev = $lookup_href->{$rev_query};
 		}
