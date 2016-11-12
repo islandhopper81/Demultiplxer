@@ -46,11 +46,11 @@ my $logger = get_logger();
 	sub get_plate_to_primer_file;
 	sub get_plate_to_primer_href;
 	sub get_index_to_well_file;
+	sub get_well_from_index;
 	sub get_fwd_fs_coding_file;
 	sub get_fwd_fs_coding_href;
 	sub get_rev_fs_coding_file;
 	sub get_rev_fs_coding_href;
-	sub get_well_from_index;
 	sub get_fastq_file;
 	sub get_output_dir;
 
@@ -66,6 +66,8 @@ my $logger = get_logger();
 	sub set_output_dir;
 
 	# Others #
+	sub parse_plate_primer_file;
+	sub print_default_params;
 	sub print_default_index_href;
 	sub print_default_fwd_fs_coding;
 	sub print_default_rev_fs_coding;
@@ -153,6 +155,12 @@ my $logger = get_logger();
 		return $plate_to_primers_href_of{ident $self};
 	}
 	
+	sub get_index_to_well_file {
+		my ($self) = @_;
+		
+		return $index_to_well_file_of{ident $self};
+	}
+	
 	sub get_well_from_index {
 		my ($self, $index) = @_;
 		
@@ -172,22 +180,28 @@ my $logger = get_logger();
 		return($well)
 	}
 	
-	sub get_index_to_well_file {
-		my ($self) = @_;
-		
-		return $index_to_well_file_of{ident $self};
-	}
-	
 	sub get_fwd_fs_coding_file {
 		my ($self) = @_;
 		
 		return $fwd_fs_coding_file_of{ident $self};
 	}
 	
+	sub get_fwd_fs_coding_href {
+		my ($self) = @_;
+		
+		return $fwd_fs_coding_href_of{ident $self};
+	}
+	
 	sub get_rev_fs_coding_file {
 		my ($self) = @_;
 		
 		return $rev_fs_coding_file_of{ident $self};
+	}
+	
+	sub get_rev_fs_coding_href {
+		my ($self) = @_;
+		
+		return $rev_fs_coding_href_of{ident $self};
 	}
 	
 	sub get_fastq_file {
@@ -435,6 +449,15 @@ my $logger = get_logger();
 		return 1;
 	}
 	
+	sub print_default_index_href {
+		my ($self) = @_;
+		
+		print "Default well to index href\n";
+		print Dumper(_get_default_index_href());
+		
+		return 1;
+	}
+	
 	sub print_default_fwd_fs_coding {
 		my ($self) = @_;
 		
@@ -449,15 +472,6 @@ my $logger = get_logger();
 		
 		print "Default rev frameshift lengths to frameshift code\n";
 		print Dumper($rev_fs_coding_href_of{ident $self});
-		
-		return 1;
-	}
-	
-	sub print_default_index_href {
-		my ($self) = @_;
-		
-		print "Default well to index href\n";
-		print Dumper(_get_default_index_href());
 		
 		return 1;
 	}
