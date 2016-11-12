@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 39;
+use Test::More tests => 43;
 use Test::Exception;
 
 # others to include
@@ -22,6 +22,8 @@ my $index_to_well_file = "$test_dir/data/index_to_well.txt";
 my $fastq_file = "$test_dir/data/mttoolbox_output.fastq";
 my $fwd_fs_coding_file = "$test_dir/data/fwd_fs_coding.txt";
 my $rev_fs_coding_file = "$test_dir/data/rev_fs_coding.txt";
+my ($fh, $bad_seqs_file) = tempfile(); close($fh);
+
 
 # test constructor
 my $de;
@@ -95,6 +97,18 @@ lives_ok(sub{ $de = Demultiplexer::Param_Handler->new({
     }, "expected to live - new(rev_fs_coding_file)" );
     is( $de2->get_rev_fs_coding_file(), $rev_fs_coding_file,
         "rev_fs_coding_file set in constructor" );
+    
+    # when an bad_seqs_file is given
+    lives_ok(sub{
+        $de2 = Demultiplexer::Param_Handler->new({
+            plate_primer_file => $plate_primer_file,
+            fastq_file => $fastq_file,
+            output_dir => $tmp_dir,
+            bad_seqs_file => $bad_seqs_file
+        })
+    }, "expected to live - new(bad_seqs_file)" );
+    is( $de2->get_bad_seqs_file(), $bad_seqs_file,
+        "bad_seqs_file set in constructor" );
 }
 
 # test get_output_dir
@@ -230,3 +244,10 @@ lives_ok(sub{ $de = Demultiplexer::Param_Handler->new({
     is( $href->{"CGTCGGT"}, "A1", "_get_default_index_href()" );
 }
 
+# test set_bad_seqs_file and get_bad_seqs_file
+{
+    my ($fh, $bad_seqs_file2) = tempfile(); close($fh);
+    lives_ok(sub{ $de->set_bad_seqs_file($bad_seqs_file2) },
+             "expected to live - set_bad_seqs_file()");
+    is($de->get_bad_seqs_file(), $bad_seqs_file2, "get_bad_seqs_file()" );
+}

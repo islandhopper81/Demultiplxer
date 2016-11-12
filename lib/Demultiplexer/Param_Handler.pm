@@ -28,6 +28,7 @@ my $logger = get_logger();
 		[index_to_well_file => ,]
 		[fwd_fs_coding_file => ,]
 		[rev_fs_coding_file => ,]
+		[bad_seqs_file => ,]
 	})};
 
 	# Attributes #
@@ -41,6 +42,7 @@ my $logger = get_logger();
 	my %rev_fs_coding_href_of;
 	my %fastq_file_of;
 	my %output_dir_of;
+	my %bad_seqs_file_of;
 	
 	# Getters #
 	sub get_plate_to_primer_file;
@@ -53,6 +55,7 @@ my $logger = get_logger();
 	sub get_rev_fs_coding_href;
 	sub get_fastq_file;
 	sub get_output_dir;
+	sub get_bad_seqs_file;
 
 	# Setters #
 	sub set_plate_to_primer_file;
@@ -64,6 +67,7 @@ my $logger = get_logger();
 	sub set_rev_fs_coding_href;
 	sub set_fastq_file;
 	sub set_output_dir;
+	sub set_bad_seqs_file;
 	
 	# Others #
 	sub parse_plate_primer_file;
@@ -111,6 +115,7 @@ my $logger = get_logger();
 		$self->parse_plate_primer_file();
 		$self->set_fastq_file($arg_href->{fastq_file});
 		$self->set_output_dir($arg_href->{output_dir});
+		$self->set_bad_seqs_file($arg_href->{bad_seqs_file});
 		
 		my $file = $arg_href->{index_to_well_file};
 		if ( defined $file ) {
@@ -167,7 +172,7 @@ my $logger = get_logger();
 		is_defined($index);
 		
 		my $well;
-		if ( defined $index_to_well_href_of{ident $self}->{$index} ) {
+		if ( is_defined($index_to_well_href_of{ident $self}->{$index}) ) {
 			$well = $index_to_well_href_of{ident $self}->{$index}
 		}
 		else {
@@ -214,6 +219,12 @@ my $logger = get_logger();
 		my ($self) = @_;
 		
 		return $output_dir_of{ident $self};
+	}
+	
+	sub get_bad_seqs_file {
+		my ($self) = @_;
+		
+		return $bad_seqs_file_of{ident $self};
 	}
 
 	###########
@@ -397,6 +408,13 @@ my $logger = get_logger();
 		$output_dir_of{ident $self} = $dir;
 		
 		return 1;
+	}
+	
+	sub set_bad_seqs_file {
+		my ($self, $file) = @_;
+		
+		#if $file is undef the the set value will be undef
+		$bad_seqs_file_of{ident $self} = $file;
 	}
 
 	##########
@@ -753,6 +771,7 @@ get_rev_fs_coding_file
 get_rev_fs_coding_href
 get_fastq_file
 get_output_dir
+get_bad_seqs_file
 set_plate_to_primer_file
 set_index_to_well_file
 set_index_to_well_href
@@ -762,6 +781,7 @@ set_rev_fs_coding_file
 set_rev_fs_coding_href
 set_fastq_file
 set_output_dir
+set_bad_seqs_file
 
 =head1 METHODS DESCRIPTION
 
@@ -1096,6 +1116,30 @@ set_output_dir
 	Throws: NA
 	Comments: If no output_dir parameter is provided in the new function
 	          the defualt output_dir is the current working directory.
+	See Also: NA
+	
+=head2 set_bad_seqss_file
+
+	Title: set_bad_seqss_file
+	Usage: $obj->set_bad_seqss_file($file)
+	Function: Sets the path to the bad seqs output file
+	Returns: 1 on success
+	Args: -file => Path to output bad seqs file
+	Throws: NA
+	Comments: If no file is set in the object then no bad sequences are printed.
+	          Bad sequences are sequences that cannot be assigned to a sample.
+	See Also: NA
+	
+=head2 get_bad_seqs_file
+
+	Title: get_bad_seqs_file
+	Usage: $obj->get_bad_seqs_file();
+	Function: Gets the output file path for the bad seqs
+	Returns: str or undef
+	Args: NA
+	Throws: NA
+	Comments: if the bad seqs file is not set then the bad seqs will not be
+	          printed.
 	See Also: NA
 
 

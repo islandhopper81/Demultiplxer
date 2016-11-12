@@ -107,6 +107,16 @@ my $logger = get_logger();
 		my $well;
 		my $count_id;  # the seq count id in the original seq header ie P0_(13134)
 		
+		# open the bad seqs file if neccessary
+		my $bad_seqs_file = $self->get_param_handler()->get_bad_seqs_file();
+		my $bad_seqs_io;
+		if ( is_defined($bad_seqs_file) ) {
+			$bad_seqs_io = BioUtils::FastqIO->new({
+				stream_type => '<',
+				file => $bad_seqs_file
+			});
+		}
+		
 		# open the fastq file
 		my $file = $self->get_param_handler->get_fastq_file();
 		my $in = BioUtils::FastqIO->new( {stream_type => '<',
@@ -143,24 +153,39 @@ my $logger = get_logger();
 				_add_seq($seq->to_FastaSeq(), \%seqs, $plate . $well);
 				$logger->debug("Seq added");
 			};
-			# skip this sequence if any of the regex's fail
+			# CATCH STATEMETS
 			if ( my $e = Exception::Class->caught('MyX::Generic::UnmatchedRegex') ) {
 				# non matching regex -- throw an error
-				print $e->error, "\n";
+				$logger->warn($e->error);
+				_print_bad_seq($seq, $e, $bad_seqs_io);
 				next;
 			}
 			elsif ( $e = Exception::Class->caught('MyX::Generic') ) {
 				# any of the other MyX::Generic errors
-				print $e->error, "\n";
+				$logger->warn($e->error);
+				_print_bad_seq($seq, $e, $bad_seqs_io);
 				next;
 			}
 			elsif ( $@ ) {
-				print $@, "\n";
+				$logger->warn($@);
+				_print_bad_seq($seq, $e, $bad_seqs_io);
+				next;
 			}
 		}
 		
 		# output all the seqs to their files
 		$self->_output_seqs(\%seqs);
+		
+		return 1;
+	}
+	
+	sub _print_bad_seq {
+		my ($seq, $e, $bad_seqs_io) = @_;
+		
+		# add the error message to the header
+		my $new_header = $seq->get_header() . " ERROR: " . $e->error;
+		$seq->set_header($new_header);
+		$bad_seqs_io->write_seq($seq);
 		
 		return 1;
 	}

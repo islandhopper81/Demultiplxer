@@ -23,12 +23,18 @@ sub check_params;
 sub _is_defined;
 
 # Variables #
-my ($plate_primer_file, $fastq_file, $output_dir, $help, $man);
+my ($plate_primer_file, $fastq_file, $output_dir, $bad_seqs_file,
+	$index_to_well_file, $fwd_fs_coding_file, $rev_fs_coding_file,
+	$help, $man);
 
 my $options_okay = GetOptions (
     "plate_primer_file|p:s" => \$plate_primer_file,
     "fastq_file|f:s" => \$fastq_file,
 	"output_dir|o:s" => \$output_dir,
+	"bad_seqs_file|b:s" => \$bad_seqs_file,
+	"index_to_well_file:s" => \$index_to_well_file,
+	"fwd_fs_coding_file:s" => \$fwd_fs_coding_file,
+	"rev_fs_coding_file:s" => \$rev_fs_coding_file,
     "help|h" => \$help,                  # flag
     "man" => \$man,                     # flag (print full man page)
 );
@@ -49,7 +55,11 @@ $logger->debug("Build Demultiplex::Param_Handler Object");
 my $ph = Demultiplexer::Param_Handler->new({
 	plate_primer_file => $plate_primer_file,
     fastq_file => $fastq_file,
-	output_dir => $output_dir
+	output_dir => $output_dir,
+	bad_seqs_file => $bad_seqs_file,
+	index_to_well_file => $index_to_well_file,
+	fwd_fs_coding_file => $fwd_fs_coding_file,
+	rev_fs_coding_file => $rev_fs_coding_file
 });
 
 $logger->debug("Build Demultiplex Object");
