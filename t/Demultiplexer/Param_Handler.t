@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 29;
+use Test::More tests => 31;
 use Test::Exception;
 
 # others to include
@@ -125,6 +125,12 @@ lives_ok(sub{ $de = Demultiplexer::Param_Handler->new({
              "expected to live - set_fwd_fs_coding_href" );
 }
 
+# test get_fwd_fs_coding_href
+{
+    lives_ok(sub{ $de->get_fwd_fs_coding_href() },
+             "expected to live - get_fwd_fs_coding_href()" );
+}
+
 # test set_rev_fs_coding_file
 {
     throws_ok(sub{ $de->set_rev_fs_coding_file() },
@@ -146,6 +152,12 @@ lives_ok(sub{ $de = Demultiplexer::Param_Handler->new({
              "expected to live - set_rev_fs_coding_href(rev_fs_len)" );
     lives_ok(sub{ $de->set_rev_fs_coding_href() },
              "expected to live - set_rev_fs_coding_href" );
+}
+
+# test get_rev_fs_coding_href
+{
+    lives_ok(sub{ $de->get_rev_fs_coding_href() },
+             "expected to live - get_rev_fs_coding_href()" );
 }
 
 # test parse_plate_primer_file
