@@ -129,6 +129,10 @@ This documentation refers to version 0.0.1
         -p plate_primer_file.txt
         -f my_seqs.fastq
         -o output_dir/
+        -b bad_sequences.fastq
+        --index_to_well_file index_to_well.txt
+        --fwd_fs_coding_file fwd_fs_coding.txt
+        --rev_fs_coding_file rev_fs_coding.txt
         
         [--help]
         [--man]
@@ -140,6 +144,10 @@ This documentation refers to version 0.0.1
     --plate_primer_file | -p     Path to plate primer file
     --fastq_file | -f            Path to an input fastq file
     --output_dir | -o            Path to the output directory
+    --bad_seqs_file | -b         Path to where the bad sequences will be printed
+    --index_to_well_file         Path to the index to well file
+    --fwd_fs_coding_file         Path to forward frameshift coding file
+    --rev_fs_coding_file         Path to reverse frameshift coding file
     --help | -h                  Prints USAGE statement
     --man                        Prints the man page
     --debug	                     Prints Log4perl DEBUG+ messages
@@ -173,6 +181,44 @@ all_categorizable_reads.fastq file
 
 Path to a directory where output files will be printed.  If no directory is
 specified the current working directory is used.
+
+=head2 --bad_seqs_file | -b
+
+Path to a file where the bad sequences can be printed.  They are printed in the
+fastq format.
+
+=head2 --index_to_well_file
+
+Path to file mapping the illumina index sequences to the plate wells.  For
+example:
+
+Sample_Well index
+A1  CGTCGGTA
+B1  GTGTCCAA
+C1  TCCATGCG
+D1  AGGTTCGC
+E1  GTCGAAGC
+F1  ACGGCTGA
+
+=head2 --fwd_fs_coding_file
+
+Path to file with the forward frameshift information and the corresponding
+codes.  The first column is the framshift sequence and the second is the
+frameshift code. For example:
+
+AGT 338F_f1_bc1
+AGTC    338F_f2_bc1
+AGTCA   338F_f1_bc2
+
+=head2 --rev_fs_coding_file
+
+Path to file with the reverse frameshift information and the corresponding
+codes.  In this case the first column is the length of the frameshift and the
+second is the corresponding code.  For example:
+
+0   806R_f1
+1   806R_f2
+2   806R_f3
  
 =head2 [--help | -h]
     
