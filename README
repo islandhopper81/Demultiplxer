@@ -1,18 +1,29 @@
 Demultiplexer version 0.0.1
 
-[ REPLACE THIS...
+Demultiplexer provides a framework for demultiplexing frameshifted primers
+frequently used in conjuction with molecule tags.  These frameshifted primers
+allow for multiplexing of many more than samples than the standard 96 illumina
+barcodes.  For more details about frameshifted primers, molecule tagging, and
+processing molecule tagged data please see:
+L<http://www.nature.com/nmeth/journal/v10/n10/abs/nmeth.2634.html>
+L<https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-15-284>
 
-  The README is used to introduce the module and provide instructions on
-  how to install the module, any machine dependencies it may have (for
-  example C compilers and installed libraries) and any other information
-  that should be understood before the module is installed.
+Under the molecule tagging protocol, each well in a 96 well illumina barcoded
+sequencing recation will have sequences with molecule tags of different lengths.
+These different lengths (ie frameshifted primers) can correspond to different
+samples.  This Demulitplexer object takes the all_categrizable_reads.fastq file
+from the MT-Toolbox output and splits the reads into samples based on the
+frameshifted primers.
 
-  A README file is required for CPAN modules since CPAN extracts the
-  README file from a module distribution so that people browsing the
-  archive can use it get an idea of the modules uses. It is usually a
-  good idea to provide version information here so that people can
-  decide whether fixes for the module are worth downloading.
-]
+There are important file provided by the user that are required for
+demultiplexing with Demultiplexer.  For information about these files and other
+required and optional parameters see the code documentation by typing the
+following commands after a successful installation:
+
+demultiplexer.pl --help
+demultiplexer.pl --man
+man Demultiplexer
+man Demultiplexer::Param_Handler
 
 
 INSTALLATION
@@ -23,11 +34,30 @@ To install this module, run the following commands:
 	./Build
 	./Build test
 	./Build install
+	
+OR if you have cpanm configure you can download and install directly from
+github:
+
+cpanm -v https://github.com/islandhopper81/Demultiplxer.git
 
 
 DEPENDENCIES
 
-None.
+BioUtils::FastqIO
+BioUtils::FastaIO
+Carp
+Class::Std::Utils
+Cwd
+Data::Dumper
+Getopt::Long
+List::MoreUtils qw(any)
+Log::Log4perl qw(:easy)
+Log::Log4perl::CommandLine qw(:all)
+MyX::Generic
+Pod::Usage
+Readonly
+version
+UtilSY 0.0.2 qw(:all)
 
 
 COPYRIGHT AND LICENCE

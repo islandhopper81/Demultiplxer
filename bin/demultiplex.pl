@@ -13,7 +13,7 @@ use version; our $VERSION = qv('0.0.1');
 use Log::Log4perl qw(:easy);
 use Log::Log4perl::CommandLine qw(:all);
 use Cwd;
-use UtilSY qw(:all);
+use UtilSY 0.0.2 qw(:all);
 use Demultiplexer;
 use Demultiplexer::Param_Handler;
 
@@ -251,14 +251,17 @@ STDERR.
 
 =head1 DESCRIPTION
 
-This script runs a demultiplexing job.  We use frameshifted primers to include
-more than 96 samples on a 16S sequencing metagenome profiling.  Of course when
-we do the actual sequencing we can only use the 96 illumina barcodes.  But based
-on the frameshifted primers we can further split the 96 samples into their
-subsamples.
+This script runs a demultiplexing job.  The Dangl lab uses frameshifted primers
+to include more than 96 samples on a 16S sequencing metagenome profiling.  Of
+course, when we do the actual sequencing we can only use the 96 illumina
+barcodes.  But based on the frameshifted primers we can further split the 96
+samples into their subsamples.
 
 Typically this script is ran on one of the output files from MT-Toolbox
 (usually the all_categorizable_reads.fastq file).
+
+Include the --verbose flag to print read count summary information.
+
 
 =head1 CONFIGURATION AND ENVIRONMENT
     
@@ -276,7 +279,7 @@ version
 Log::Log4perl qw(:easy)
 Log::Log4perl::CommandLine qw(:all)
 Cwd
-UtilSY qw(:all)
+UtilSY 0.0.2 qw(:all)
 Demultiplexer
 
 
