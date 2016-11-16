@@ -70,8 +70,6 @@ my $logger = get_logger();
 		
 		# initialize the object attributes
 		$param_handler_of{ident $new_obj} = $arg_href->{param_handler};
-		$new_obj->_init_summary_counts();
-		$new_obj->_init_sample_counts();
 
 		return $new_obj;
 	}
@@ -108,8 +106,9 @@ my $logger = get_logger();
 	sub demultiplex {
 		my ($self) = @_;
 		
-		# get the primer info
-		#my $primers_to_frame = $self->parse_plate_primer_file();
+		# (re)set the count data stored in this object
+		$self->_init_summary_counts();
+		$self->_init_sample_counts();
 		
 		# variables
 		my $total = 0;
@@ -608,6 +607,8 @@ None reported.
 new
 demultiplex
 get_param_handler
+get_sample_counts
+get_summary_counts
 
 
 =head1 METHODS DESCRIPTION
@@ -647,6 +648,32 @@ get_param_handler
 	Throws: NA
 	Comments: NA
 	See Also: Demultiplexer::Param_Hanlder
+	
+=head2 get_sample_counts
+
+	Title: get_sample_counts
+	Usage: $obj->get_sample_counts();
+	Function: gets an object where read counts per sample are stored
+	Returns: Demultiplexer::Summary
+	Args: NA
+	Throws: NA
+	Comments: This will only be populated after running the demultiplex
+	          function.  The counts are reset every time demultiplex is ran.
+	See Also: Demultiplexer::Summary
+	
+=head2 get_summary_counts
+
+	Title: get_summary_counts
+	Usage: $obj->get_summary_counts();
+	Function: gets an object where summary read count info is stored
+	Returns: Demultiplexer::Summary
+	Args: NA
+	Throws: NA
+	Comments: This will only be populated after running the demultiplex
+	          function.  The counts are reset every time demultiplex is ran.
+			  When a sample has no reads it will not be included in this data
+			  (ie it is not automatically set to 0).
+	See Also: Demultiplexer::Summary
 
 
 =head1 BUGS AND LIMITATIONS
