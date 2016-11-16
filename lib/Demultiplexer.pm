@@ -12,10 +12,11 @@ use MyX::Generic;
 use version; our $VERSION = qv('0.0.1');
 use BioUtils::FastqIO;
 use BioUtils::FastaIO;
-use UtilSY qw(:all);
+use UtilSY 0.0.2 qw(:all);
 use Data::Dumper;
 use Cwd;
-use Demultiplexer::Param_Handler 0.0.1;
+use Demultiplexer::Param_Handler;
+use Demultiplexer::Summary;
 
 # set up the logging environment
 my $logger = get_logger();
@@ -28,9 +29,13 @@ my $logger = get_logger();
 
 	# Attributes #
 	my %param_handler_of;
+	my %summary_counts_of;
+	my %sample_counts_of;
 	
 	# Getters #
 	sub get_param_handler;
+	sub get_summary_counts;
+	sub get_sample_counts;
 
 	# Setters #
 	
@@ -65,6 +70,8 @@ my $logger = get_logger();
 		
 		# initialize the object attributes
 		$param_handler_of{ident $new_obj} = $arg_href->{param_handler};
+		$new_obj->_init_summary_counts();
+		$new_obj->_init_sample_counts();
 
 		return $new_obj;
 	}
@@ -77,11 +84,23 @@ my $logger = get_logger();
 		
 		return $param_handler_of{ident $self};
 	}
+	
+	sub get_summary_counts {
+		my ($self) = @_;
+		
+		return $summary_counts_of{ident $self};
+	}
+	
+	sub get_sample_counts {
+		my ($self) = @_;
+		
+		return $sample_counts_of{ident $self};
+	}
 
 	###########
 	# Setters #
 	###########
-	
+
 	
 	##########
 	# Others #
@@ -106,11 +125,12 @@ my $logger = get_logger();
 		my $plate;
 		my $well;
 		my $count_id;  # the seq count id in the original seq header ie P0_(13134)
+		my $summary_counts = $self->get_summary_counts();
 		
 		# open the bad seqs file if neccessary
 		my $bad_seqs_file = $self->get_param_handler()->get_bad_seqs_file();
 		my $bad_seqs_io;
-		if ( is_defined($bad_seqs_file) ) {
+		if ( is_defined($bad_seqs_file, "bad_seqs_file") ) {
 			$bad_seqs_io = BioUtils::FastqIO->new({
 				stream_type => '<',
 				file => $bad_seqs_file
@@ -128,6 +148,7 @@ my $logger = get_logger();
 			$logger->debug("######################################");
 			$header = $seq->get_header();
 			$logger->debug("header: $header");
+			$summary_counts->increment_feature("Total seqs");
 			
 			eval {
 				$fwd_fs = _get_fwd_fs($header);
@@ -151,6 +172,8 @@ my $logger = get_logger();
 				_update_seq_id($seq, $plate, $well, $count_id);
 				
 				_add_seq($seq->to_FastaSeq(), \%seqs, $plate . $well);
+				$summary_counts->increment_feature("Good seqs");
+				
 				$logger->debug("Seq added");
 			};
 			# CATCH STATEMETS
@@ -158,17 +181,20 @@ my $logger = get_logger();
 				# non matching regex -- throw an error
 				$logger->warn($e->error);
 				_print_bad_seq($seq, $e, $bad_seqs_io);
+				$summary_counts->increment_feature("Bad regex seqs");
 				next;
 			}
 			elsif ( $e = Exception::Class->caught('MyX::Generic') ) {
 				# any of the other MyX::Generic errors
 				$logger->warn($e->error);
 				_print_bad_seq($seq, $e, $bad_seqs_io);
+				$summary_counts->increment_feature("Bad other seqs");
 				next;
 			}
 			elsif ( $@ ) {
 				$logger->warn($@);
 				_print_bad_seq($seq, $e, $bad_seqs_io);
+				$summary_counts->increment_feature("Bad other seqs");
 				next;
 			}
 		}
@@ -176,11 +202,21 @@ my $logger = get_logger();
 		# output all the seqs to their files
 		$self->_output_seqs(\%seqs);
 		
+		# log the summary info
+		$logger->info("\n- Summary -\n" .
+					  $summary_counts->to_string() .
+					  "\n");
+		
 		return 1;
 	}
 	
 	sub _print_bad_seq {
 		my ($seq, $e, $bad_seqs_io) = @_;
+		
+		if ( ! defined $bad_seqs_io ) {
+			# don't print the bad seqs if the bad seqs file is not defined
+			next;
+		}
 		
 		# add the error message to the header
 		my $new_header = $seq->get_header() . " ERROR: " . $e->error;
@@ -212,6 +248,9 @@ my $logger = get_logger();
 	sub _output_seqs {
 		my ($self, $seqs_href) = @_;
 		
+		# get the summary object so I can record the number of reads per sample
+		my $sample_counts = $self->get_sample_counts();
+		
 		# create a dir in the output dir called samples
 		my $dir = $self->get_param_handler()->get_output_dir();
 		
@@ -226,8 +265,15 @@ my $logger = get_logger();
 			
 			foreach my $seq ( @{$seqs_href->{$sample}} ) {
 				$fasta_out->write_seq($seq);
+				$sample_counts->increment_feature($sample);
 			}
 		}
+		
+		$logger->info("\n- Sample Counts -\n" .
+					  $sample_counts->to_string() .
+					  "\n");
+		
+		return 1;
 	}
 	
 	sub _get_out_file_name {
@@ -420,6 +466,32 @@ my $logger = get_logger();
 		return($count_id);
 	}
 	
+	sub _init_summary_counts {
+		my ($self) = @_;
+		
+		my $summary_counts = Demultiplexer::Summary->new();
+		$summary_counts->set_feature("Good seqs", 0);
+		$summary_counts->set_feature("Bad regex seqs", 0);
+		$summary_counts->set_feature("Bad other seqs", 0);
+		
+		$summary_counts_of{ident $self} = $summary_counts;
+		
+		return 1;
+	}
+	
+	sub _init_sample_counts {
+		my ($self) = @_;
+		
+		# if there was an easy way to know all the samples to put
+		# in this object I would do it here.  But I can't think of an
+		# easy way.
+		
+		my $sample_counts = Demultiplexer::Summary->new();
+		
+		$sample_counts_of{ident $self} = $sample_counts;
+		
+		return 1;
+	}
 }
 
 1; # Magic true value required at end of module
@@ -498,6 +570,11 @@ There are several pieces of information required by Demultiplexer.  See the
 documentation in Demultiplexer::Param_Handler for detailed information about the
 required and option parameter values for a Demultiplexer.
 
+Note that when a sample has no reads an output file is not created and there is
+no summary information about it printed when the logger info is invoked.  The
+user may have to manually check and be aware of samples that don't have
+sequences but should.
+
 =head1 CONFIGURATION AND ENVIRONMENT
 
 Demultiplexer requires no configuration files or environment variables.
@@ -515,7 +592,7 @@ MyX::Generic
 version; our $VERSION = qv('0.0.1')
 BioUtils::FastqIO
 BioUtils::FastaIO
-UtilSY qw(:all)
+UtilSY 0.0.2 qw(:all)
 Data::Dumper
 Cwd
 Demultiplexer::Param_Handler 0.0.1
@@ -578,11 +655,7 @@ No bugs have been reported.
 
 =head1 TO DO
 
-- what to do with seqs that fail
-- what if there is a sample that has no reads
-- summary numbers
 - gzip files after they are created
-- refactor the parameters to a param_handler object
 
 =head1 AUTHOR
 

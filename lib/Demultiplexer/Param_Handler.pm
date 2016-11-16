@@ -12,7 +12,7 @@ use MyX::Generic;
 use version; our $VERSION = qv('0.0.1');
 use BioUtils::FastqIO;
 use BioUtils::FastaIO;
-use UtilSY qw(:all);
+use UtilSY 0.0.2 qw(:all);
 use Data::Dumper;
 use Cwd;
 
@@ -169,10 +169,10 @@ my $logger = get_logger();
 	sub get_well_from_index {
 		my ($self, $index) = @_;
 		
-		is_defined($index);
+		check_defined($index);
 		
 		my $well;
-		if ( is_defined($index_to_well_href_of{ident $self}->{$index}) ) {
+		if ( check_defined($index_to_well_href_of{ident $self}->{$index}) ) {
 			$well = $index_to_well_href_of{ident $self}->{$index}
 		}
 		else {
@@ -234,7 +234,7 @@ my $logger = get_logger();
 		my ($self, $file) = @_;
 		
 		# check if the parameter is defined
-		is_defined($file, "file");
+		check_defined($file, "file");
 		
 		# check if the file exists and is non empty
 		check_file($file);
@@ -248,7 +248,7 @@ my $logger = get_logger();
 		my ($self, $file) = @_;
 		
 		# check if the parameter is defined
-		is_defined($file, "file");
+		check_defined($file, "file");
 		
 		# check if the file exists and is non empty
 		check_file($file);
@@ -297,7 +297,7 @@ my $logger = get_logger();
 		my ($self, $file) = @_;
 		
 		# check if the parameter is defined
-		is_defined($file, "file");
+		check_defined($file, "file");
 		
 		# check if the file exists and is non empty
 		check_file($file);
@@ -344,7 +344,7 @@ my $logger = get_logger();
 		my ($self, $file) = @_;
 		
 		# check if the parameter is defined
-		is_defined($file, "file");
+		check_defined($file, "file");
 		
 		# check if the file exists and is non empty
 		check_file($file);
@@ -390,7 +390,7 @@ my $logger = get_logger();
 	sub set_fastq_file {
 		my ($self, $file) = @_;
 		
-		is_defined($file);
+		check_defined($file);
 		check_file($file);
 		
 		$fastq_file_of{ident $self} = $file;
@@ -1118,7 +1118,7 @@ set_bad_seqs_file
 	          the defualt output_dir is the current working directory.
 	See Also: NA
 	
-=head2 set_bad_seqss_file
+=head2 set_bad_seqs_file
 
 	Title: set_bad_seqss_file
 	Usage: $obj->set_bad_seqss_file($file)

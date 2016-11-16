@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 19;
+use Test::More tests => 20;
 use Test::Exception;
 
 # others to include
@@ -24,6 +24,7 @@ my $fastq_file = "$test_dir/data/mttoolbox_output.fastq";
 my $fwd_fs_seq = "$test_dir/data/fwd_fs_seq_to_fs_code.txt";
 my $rev_fs_len = "$test_dir/data/rev_fs_len_to_fs_code.txt";
 my $tmp_dir = tempdir();
+#print "Output dir: $tmp_dir\n";
 
 # make a Demultiplex::Param_Handler for testing
 my $ph;
@@ -119,26 +120,8 @@ lives_ok(sub{ $de = Demultiplexer->new({
 
 # test demultiplex
 {
-    #$de->demultiplex();
-    ;
-}
-
-# test when a custom index to well file is used
-{
-    ;
-    # I'm pretty sure this works, but I should write test code later
-}
-
-# test when a custom fwd_fs_seq_to_fs_code file is used
-{
-    ;
-    # I'm pretty sure this works, but I should write test code later
-}
-
-# test when a custom rev_fs_len_to_fs_code file is used
-{
-    ;
-    # I'm pretty sure this works, but I should write test code later
+    lives_ok(sub{ $de->demultiplex() },
+             "lives - demultiplex()" );
 }
 
 
