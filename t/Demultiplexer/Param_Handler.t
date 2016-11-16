@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 43;
+use Test::More tests => 44;
 use Test::Exception;
 
 # others to include
@@ -165,6 +165,9 @@ lives_ok(sub{ $de = Demultiplexer::Param_Handler->new({
 
 # test get_well_from_index
 {
+    throws_ok(sub{ $de->get_well_from_index() },
+              "MyX::Generic::Undef::Param",
+              "throws - get_well_from_index()" );
     is( $de->get_well_from_index("CGTCGGT"),
        "A1",
        "get_well_from_index(CGTCGGT)" );
