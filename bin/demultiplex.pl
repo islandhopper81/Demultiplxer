@@ -235,8 +235,8 @@ level and greater messages.
 
 =head2 [--verbose]
 
-Prints Log4perl INFO+ messages.  The plus here means it prints INFO level
-and greater messages.
+Note that this flag prints useful summary information!  Prints Log4perl INFO+
+messages.  The plus here means it prints INFO level and greater messages.
 
 =head2 [--quiet]
 
