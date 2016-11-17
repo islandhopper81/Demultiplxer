@@ -131,7 +131,7 @@ my $logger = get_logger();
 		my $bad_seqs_io;
 		if ( is_defined($bad_seqs_file, "bad_seqs_file") ) {
 			$bad_seqs_io = BioUtils::FastqIO->new({
-				stream_type => '<',
+				stream_type => '>',
 				file => $bad_seqs_file
 			});
 		}
