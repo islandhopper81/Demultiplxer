@@ -214,7 +214,7 @@ my $logger = get_logger();
 		
 		if ( ! defined $bad_seqs_io ) {
 			# don't print the bad seqs if the bad seqs file is not defined
-			next;
+			return 0;
 		}
 		
 		# add the error message to the header
