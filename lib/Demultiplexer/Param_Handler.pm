@@ -9,7 +9,7 @@ use List::MoreUtils qw(any);
 use Log::Log4perl qw(:easy);
 use Log::Log4perl::CommandLine qw(:all);
 use MyX::Generic;
-use version; our $VERSION = qv('0.0.1');
+use version; our $VERSION = qv('1.0.0');
 use BioUtils::FastqIO;
 use BioUtils::FastaIO;
 use UtilSY 0.0.2 qw(:all);
@@ -643,7 +643,7 @@ Demultiplexer::Param_Handler - parameter data and opperations
 
 =head1 VERSION
 
-This document describes Demultiplexer::Param_Handler version 0.0.1
+This document describes Demultiplexer::Param_Handler version 1.0.0
 
 
 =head1 SYNOPSIS
@@ -741,7 +741,7 @@ List::MoreUtils qw(any)
 Log::Log4perl qw(:easy)
 Log::Log4perl::CommandLine qw(:all)
 MyX::Generic
-version; our $VERSION = qv('0.0.1')
+version; our $VERSION = qv('1.0.0')
 BioUtils::FastqIO
 BioUtils::FastaIO
 UtilSY qw(:all)

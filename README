@@ -1,4 +1,4 @@
-Demultiplexer version 0.0.1
+Demultiplexer version 1.0.0
 
 Demultiplexer provides a framework for demultiplexing frameshifted primers
 frequently used in conjuction with molecule tags.  These frameshifted primers

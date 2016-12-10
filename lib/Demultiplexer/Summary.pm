@@ -10,7 +10,7 @@ use Log::Log4perl qw(:easy);
 use Log::Log4perl::CommandLine qw(:all);
 use MyX::Generic;
 use UtilSY qw(:all);
-use version; our $VERSION = qv('0.0.1');
+use version; our $VERSION = qv('1.0.0');
 use base qw(DataObj);
 
 # set up the logging environment
@@ -94,7 +94,7 @@ Demultiplexer::Summary - DataObj containing summary count numbers
 
 =head1 VERSION
 
-This document describes Demultiplexer::Summary version 0.0.1
+This document describes Demultiplexer::Summary version 1.0.0
 
 
 =head1 SYNOPSIS
@@ -130,7 +130,7 @@ List::MoreUtils qw(any)
 Log::Log4perl qw(:easy)
 Log::Log4perl::CommandLine qw(:all)
 MyX::Generic
-version; our $VERSION = qv('0.0.1')
+version; our $VERSION = qv('1.0.0')
 UtilSY qw(:all)
 DataObj
 
