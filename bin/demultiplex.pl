@@ -161,8 +161,14 @@ This documentation refers to version 0.0.1
 =head2 --plate_primer_file | -p
 
 Path to a the plate primer file.  This is a tab delimited file with three
-columns.  The first column is the plate name.  The second column are the forward
-barcodes used.  The third column are the reverse primers used.  For example:
+columns.  
+
+The first column is the plate name.  This is specified by the user
+and can be anything.  Each plate name must be unique.  The second column
+is the code used to specify the forward barcodes.  The third column are
+the reverse primers used.  
+
+For example:
 
 	CL1 338F_f4_bc2,338F_f5_bc2,338F_f6_bc2 806R_f3,806R_f4,806R_f6
 	CL2 338F_f1_bc1,338F_f2_bc1,338F_f3_bc1 806R_f3,806R_f4,806R_f6
@@ -170,6 +176,19 @@ barcodes used.  The third column are the reverse primers used.  For example:
 	MF2 338F_f1_bc2,338F_f2_bc2,338F_f3_bc2 806R_f4,806R_f5,806R_f6
 	PiG1    338F_f1_bc2,338F_f2_bc2,338F_f3_bc2 806R_f1,806R_f2,806R_f3
 	PiG2    338F_f4_bc1,338F_f5_bc1,338F_f6_bc1 806R_f4,806R_f5,806R_f6
+
+In the above example the forward frameshift primer codes are formatted with the
+primer name (e.g. 338F), number of frameshifts (e.g. f4), and frameshift
+sequence code (e.g. bc2).  Each comma seperated value is used to retrieve the
+frameshift  sequences used in the primers (e.g. TGA, TTGA, ACT, TACT, etc) and
+is specified in the --fwd_fs_coding_file file.  The defaults used in the Dangl
+lab will be used if no --fwd_fs_coding_file file is specified.  These defualts
+are shown in the documentation for the --fwd_fs_coding_file parameter below.  
+The values in this second column of the plate_primer_file must match something
+in the second column of the fwd_fs_coding_file. The reverse frameshift primers
+ are similar but don't have a frameshift sequence. They simply match to a 
+length.  So fwd frameshifts can be sequence and length specific, but rev 
+frameshifts are only length specific.  
 
 =head2 --fastq_file | -f
 
@@ -189,36 +208,44 @@ fastq format.
 
 =head2 --index_to_well_file
 
-Path to file mapping the illumina index sequences to the plate wells.  For
-example:
+Path to file mapping the illumina index sequences to the plate wells.  The
+index sequence is included in the headers of the sequence file as it was 
+output from MTToolbox.  The sequence is used to lookup the sample well.  The
+sample well is printed in the sequence header along with the plate ID when the
+sequences are output.  Remember the plate IDs come from the 
+--plate_primer_file.  So a demultiplex sequence might have a header that 
+starts with something like "pCL1wA1".  For example here are the first few lines
+of the Dangl lab index_to_well_file:
 
-Sample_Well index
-A1  CGTCGGTA
-B1  GTGTCCAA
-C1  TCCATGCG
-D1  AGGTTCGC
-E1  GTCGAAGC
-F1  ACGGCTGA
+	Sample_Well index
+	A1  CGTCGGTA
+	B1  GTGTCCAA
+	C1  TCCATGCG
+	D1  AGGTTCGC
+	E1  GTCGAAGC
+	F1  ACGGCTGA
 
 =head2 --fwd_fs_coding_file
 
 Path to file with the forward frameshift information and the corresponding
 codes.  The first column is the framshift sequence and the second is the
-frameshift code. For example:
+frameshift code. The defaults used in the Dangl lab are shown in the example
+below:
 
-AGT 338F_f1_bc1
-AGTC    338F_f2_bc1
-AGTCA   338F_f1_bc2
+	AGT 338F_f1_bc1
+	AGTC    338F_f2_bc1
+	AGTCA   338F_f1_bc2
 
 =head2 --rev_fs_coding_file
 
 Path to file with the reverse frameshift information and the corresponding
 codes.  In this case the first column is the length of the frameshift and the
-second is the corresponding code.  For example:
+second is the corresponding code.  The defaults used in the Dangl lab are 
+shown in the example below:
 
-0   806R_f1
-1   806R_f2
-2   806R_f3
+	0   806R_f1
+	1   806R_f2
+	2   806R_f3
  
 =head2 [--help | -h]
     

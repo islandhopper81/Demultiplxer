@@ -60,6 +60,11 @@ version
 UtilSY 0.0.2 qw(:all)
 
 
+INSTRUCTIONS
+
+see man demultiplex.pl
+
+
 COPYRIGHT AND LICENCE
 
 Copyright (C) 2016, Scott Yourstone
