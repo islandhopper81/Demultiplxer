@@ -58,6 +58,7 @@ Pod::Usage
 Readonly
 version
 UtilSY 0.0.2 qw(:all)
+DataObj
 
 
 INSTRUCTIONS
