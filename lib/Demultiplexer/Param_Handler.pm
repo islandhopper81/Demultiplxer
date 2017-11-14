@@ -169,10 +169,10 @@ my $logger = get_logger();
 	sub get_well_from_index {
 		my ($self, $index) = @_;
 		
-		check_defined($index);
+		check_defined($index, "index");
 		
 		my $well;
-		if ( check_defined($index_to_well_href_of{ident $self}->{$index}) ) {
+		if ( is_defined($index_to_well_href_of{ident $self}->{$index}, "well") ) {
 			$well = $index_to_well_href_of{ident $self}->{$index}
 		}
 		else {
@@ -390,7 +390,7 @@ my $logger = get_logger();
 	sub set_fastq_file {
 		my ($self, $file) = @_;
 		
-		check_defined($file);
+		check_defined($file, "file");
 		check_file($file);
 		
 		$fastq_file_of{ident $self} = $file;

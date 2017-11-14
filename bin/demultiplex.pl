@@ -20,7 +20,6 @@ use Demultiplexer::Param_Handler;
 
 # Subroutines #
 sub check_params;
-sub _is_defined;
 
 # Variables #
 my ($plate_primer_file, $fastq_file, $output_dir, $bad_seqs_file,
