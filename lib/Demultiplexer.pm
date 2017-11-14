@@ -227,6 +227,9 @@ my $logger = get_logger();
 	
 	sub _update_seq_id {
 		my ($seq, $plate, $well, $count_id) = @_;
+		$logger->debug("update_seq_id");
+		
+		# NOTE: this destroys the previous sequence IDs
 		
 		my $header = $seq->get_header();
 		my $new_id = "p" . $plate . "w" . $well . "_" . $count_id;
@@ -235,9 +238,17 @@ my $logger = get_logger();
 		if ( $header =~ m/P\d+_\d+ (.*)/ ) {
 			$new_header = $new_id . " " . $1;
 		}
-		else {
-			print "ERROR\n";
+		elsif ( $header =~ m/\S+\s(.*)/ ) {
+			$new_header = $new_id . " " . $1;
 		}
+		else {
+			$new_header = $new_id . " " . $header;
+			
+			my $msg = "WARNING: Headers might not be in MTToolbox acceptable format";
+			$logger->warn($msg);
+		}
+
+		$logger->debug("new header: $new_header\n");
 		
 		$seq->set_header($new_header);
 		
@@ -574,6 +585,12 @@ no summary information about it printed when the logger info is invoked.  The
 user may have to manually check and be aware of samples that don't have
 sequences but should.
 
+Importantly, the original IDs in the input sequences are changed after running
+the demultiplex() function. Of course, the IDs in the actual input file remain,
+but the sequence IDs in the output file could be difficult to connect back to
+those in the original file. If this is a problem please send me an email, and I
+will resolve it.
+
 =head1 CONFIGURATION AND ENVIRONMENT
 
 Demultiplexer requires no configuration files or environment variables.
@@ -635,7 +652,14 @@ get_summary_counts
 	Args: NA
 	Throws: MyX::Generic::UnmatchedRegex
 	        MyX::Generic
-	Comments: uses BioUtils::FastqIO
+	Comments: uses BioUtils::FastqIO.
+	
+			  Importantly, the original IDs in the input sequences are changed
+			  after running the demultiplex() function. Of course, the IDs in
+			  the actual input file remain, but the sequence IDs in the output
+			  file could be difficult to connect back to those in the original
+			  file. If this is a problem please send me an email, and I will
+			  resolve it.
 	See Also: NA
 	
 =head2 get_param_handler

@@ -194,7 +194,11 @@ frameshifts are only length specific.
 
 Path to an input fastq file.  This file is likely output from MT-Toolbox. The
 MT-Toolbox file that most users will input here is the
-all_categorizable_reads.fastq file
+all_categorizable_reads.fastq file.  Note that the Demultiplexer.pl changes the
+IDs of the sequences when they are output.  The IDs in the --fastq_file will not
+change, but it could be difficult to directly connect the output sequences with
+the input sequences.  If this is a problem please email me and I will resolve it
+for you.
 
 =head2 --output_dir | -o
 

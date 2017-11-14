@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 20;
+use Test::More tests => 22;
 use Test::Exception;
 
 # others to include
@@ -103,7 +103,19 @@ lives_ok(sub{ $de = Demultiplexer->new({
 
     lives_ok(sub{ Demultiplexer::_update_seq_id($seq, "A", "B", "10") },
              "expected to live - _update_seq_id");
-    is($seq->get_header(), $new_header, "check _update_seq_id for correctness" );
+    is($seq->get_header(), $new_header, "check _update_seq_id for correctness -- 1" );
+    
+    # test the case when the headers are not in Sur's P-num format but something close
+    $header = "A10_77775 CCGTTGACTACTACCT-TCAAGTCATG UNC20:346:000000000-AWCC2:1:2108:6913:19538 1:N:0:GATGCCTT";
+    $new_header = "pAwB_10 CCGTTGACTACTACCT-TCAAGTCATG UNC20:346:000000000-AWCC2:1:2108:6913:19538 1:N:0:GATGCCTT";
+    $seq = BioUtils::FastaSeq->new({
+        header => $header,
+        seq => "ATCTG"
+    });
+
+    lives_ok(sub{ Demultiplexer::_update_seq_id($seq, "A", "B", "10") },
+             "expected to live - _update_seq_id -- not surs p-num format");
+    is($seq->get_header(), $new_header, "check _update_seq_id for correctness -- 2" );
 }
 
 # test _get_out_file_name
